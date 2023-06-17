@@ -287,6 +287,42 @@ protected:
 	bool CommandCallMovement(lcf::rpg::EventCommand const& com);
 	bool CommandWaitForMovement(lcf::rpg::EventCommand const& com);
 
+	// Custom Commands
+	bool CommandSearchPath(lcf::rpg::EventCommand const& com);
+	bool CommandActivateEventAt(lcf::rpg::EventCommand const& com);
+
+
+	struct NoeudA {
+		NoeudA(int a, int b, int c, int d) {
+			x = a;
+			y = b;
+			cout = c;
+			direction = d;
+		}
+		int x;
+		int y;
+		int cout;
+		int id = 0;
+
+		int parentID = -1;
+		int parentX = -1;
+		int parentY = -1;
+		int direction;
+
+		friend bool operator==(const NoeudA& n1, const NoeudA& n2)
+		{
+			return n1.x == n2.x && n1.y == n2.y;
+		}
+
+		bool operator()(NoeudA const& a, NoeudA const& b)
+		{
+			return a.id > b.id;
+		}
+
+	};
+	int vectorContains(std::vector<NoeudA> v, NoeudA x);
+	NoeudA pop_front(std::vector<NoeudA>& vec);
+
 	int DecodeInt(lcf::DBArray<int32_t>::const_iterator& it);
 	const std::string DecodeString(lcf::DBArray<int32_t>::const_iterator& it);
 	lcf::rpg::MoveCommand DecodeMove(lcf::DBArray<int32_t>::const_iterator& it);

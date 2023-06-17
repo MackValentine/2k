@@ -821,6 +821,10 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacSetGameOption(com);
 		case Cmd::Maniac_CallCommand:
 			return CommandManiacCallCommand(com);
+		case static_cast<Game_Interpreter::Cmd>(2001): //Cmd::EasyRpg_Pathfinder:
+			return CommandSearchPath(com);
+		case static_cast<Game_Interpreter::Cmd>(2002): //Cmd::EasyRpg_ActivateEvent:
+			return CommandActivateEventAt(com);
 		case 2050: //Cmd::EasyRpg_CallMovement
 			return CommandCallMovement(com);
 		case 2051: //Cmd::EasyRpg_WaitForMovement
@@ -4774,4 +4778,222 @@ bool Game_Interpreter::ManiacCheckContinueLoop(int val, int val2, int type, int 
 		default:
 			return false;
 	}
+}
+
+
+bool Game_Interpreter::CommandSearchPath(lcf::rpg::EventCommand const& com) {
+	int eventID = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int destX = ValueOrVariable(com.parameters[2], com.parameters[3]);
+	int destY = ValueOrVariable(com.parameters[4], com.parameters[5]);
+
+	bool passableDestination = true;
+
+	if (com.string == "false")
+		passableDestination = false;
+
+	Game_Character* event;
+	if (eventID == 0)
+		event = Main_Data::game_player.get();
+	else
+		event = GetCharacter(eventID);
+
+	event->CancelMoveRoute();
+
+	NoeudA start = NoeudA(event->GetX(), event->GetY(), 0, -1);
+	if (start.x == destX && start.y == destY)
+		return true;
+
+	std::vector<NoeudA> list;
+	std::vector<NoeudA> closedList;
+
+	list.push_back(start);
+	int id = 0;
+	int idd = 0;
+
+	int stepsTaken = 0; // Initialize steps taken to 0.
+	int maxSteps = 1000;
+	NoeudA closestNode = NoeudA(destX, destY, INT_MAX, -1); // Initialize with a very high cost.
+	int closestDistance = INT_MAX; // Initialize with a very high distance.
+
+	while (!list.empty() || stepsTaken < maxSteps) {
+		if (stepsTaken >= maxSteps) { //id >= list.size() || 
+			// Reached the maximum steps or cutoff limit.
+			break; // Exit the loop to build final route.
+		}
+
+		NoeudA n = pop_front(list);//list[id];
+		stepsTaken++;
+		closedList.push_back(n);
+
+		if (n.x == destX && n.y == destY) {
+			// Reached the destination.
+			closestNode = n;
+			closestDistance = 0;
+			break;  // Exit the loop to build final route.
+		}
+		else {
+
+			std::vector<NoeudA> neighbour;
+			NoeudA nn = NoeudA(n.x + 1, n.y, n.cout + 1, 1); // Right
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x, n.y - 1, n.cout + 1, 0); // Up
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x - 1, n.y, n.cout + 1, 3); // left
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x, n.y + 1, n.cout + 1, 2); // Down
+			neighbour.push_back(nn);
+
+			nn = NoeudA(n.x - 1, n.y + 1, n.cout + 1, 6); // Down Left
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x + 1, n.y - 1, n.cout + 1, 4); // Up Right
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x - 1, n.y - 1, n.cout + 1, 7); // Up Left
+			neighbour.push_back(nn);
+			nn = NoeudA(n.x + 1, n.y + 1, n.cout + 1, 5); // Down Right
+			neighbour.push_back(nn);
+
+			for (NoeudA a : neighbour) {
+				idd++;
+				a.parentX = n.x;
+				a.parentY = n.y;
+				a.id = idd;
+				a.parentID = n.id;
+
+				// Adjust neighbor coordinates for map looping
+				if (Game_Map::LoopHorizontal()) {
+					if (a.x >= Game_Map::GetTilesX())
+						a.x -= Game_Map::GetTilesX();
+					else if (a.x < 0)
+						a.x += Game_Map::GetTilesX();
+				}
+
+				if (Game_Map::LoopVertical()) {
+					if (a.y >= Game_Map::GetTilesY())
+						a.y -= Game_Map::GetTilesY();
+					else if (a.y < 0)
+						a.y += Game_Map::GetTilesY();
+				}
+
+				int i = vectorContains(list, a);
+				//if (!((vectorContains(closedList, a) != -1) || (i != -1 && i < list.size() && list[i].cout < a.cout))) {
+				//if (!((i != -1 && i < list.size() && list[i].cout < a.cout))) {
+				if (i < 0) {
+					if (event->MakeWay(n.x, n.y, a.x, a.y) || (passableDestination && a.x == destX && a.y == destY)) {
+						//Output::Debug(" {} {} {} {}", a.x, a.y, a.id, a.direction);
+						if (a.direction == 4) {
+							if (event->MakeWay(n.x, n.y, n.x + 1, n.y) || event->MakeWay(n.x, n.y, n.x, n.y - 1))
+								list.push_back(a);
+						}
+						else if (a.direction == 5) {
+							if (event->MakeWay(n.x, n.y, n.x + 1, n.y) || event->MakeWay(n.x, n.y, n.x, n.y + 1))
+								list.push_back(a);
+						}
+						else if (a.direction == 6) {
+							if (event->MakeWay(n.x, n.y, n.x - 1, n.y) || event->MakeWay(n.x, n.y, n.x, n.y + 1))
+								list.push_back(a);
+						}
+						else if (a.direction == 7) {
+							if (event->MakeWay(n.x, n.y, n.x - 1, n.y) || event->MakeWay(n.x, n.y, n.x, n.y - 1))
+								list.push_back(a);
+						}
+						else
+							list.push_back(a);
+					}
+				}
+			}
+		}
+		id++;
+		// Calculate the Manhattan distance between the current node and the destination
+		int manhattanDist = abs(destX - n.x) + abs(destY - n.y);
+
+		// Check if this node is closer to the destination
+		if (manhattanDist < closestDistance) {
+			closestNode = n;
+			closestDistance = manhattanDist;
+		}
+
+	}
+
+	// Check if a path to the closest node was found.
+	if (closestDistance != INT_MAX) {
+		// Build a route to the closest reachable node.
+		std::vector<NoeudA> listMove;
+
+		//Output::Debug("Chemin :");
+		NoeudA node = closestNode;
+		while (true) {
+			listMove.push_back(node);
+			bool foundParent = false;
+			for (NoeudA node2 : listMove) {
+				//Output::Debug("N {} {} {}", node->x, node->y, node->parentID);
+				if (node2.x == node.parentX &&
+					node2.y == node.parentY) {
+					node = node2;
+					foundParent = true;
+					break;
+				}
+			}
+			if (!foundParent)
+				break;
+		}
+
+		std::reverse(listMove.rbegin(), listMove.rend());
+
+		lcf::rpg::MoveRoute route;
+		// route.skippable = true;
+		route.repeat = false;
+
+		for (NoeudA node2 : listMove) {
+			if (node2.direction >= 0) {
+				lcf::rpg::MoveCommand cmd;
+				cmd.command_id = node2.direction;
+				route.move_commands.push_back(cmd);
+
+				//Output::Debug("NF {} {} {}", node2.x, node2.y, cmd.command_id);
+			}
+		}
+
+		lcf::rpg::MoveCommand cmd;
+		cmd.command_id = 23;
+		route.move_commands.push_back(cmd);
+
+		event->ForceMoveRoute(route, 8);
+
+		return true;
+	}
+
+	// No path to the destination, return failure.
+	return false;
+}
+
+int Game_Interpreter::vectorContains(std::vector<NoeudA> v, NoeudA n) {
+	int id = -1;
+	for (NoeudA na : v) {
+		if (na.x == n.x && na.y == n.y) {
+			id = na.id;
+			break;
+		}
+	}
+	return id;
+}
+
+Game_Interpreter::NoeudA Game_Interpreter::pop_front(std::vector<NoeudA>& vec)
+{
+	assert(!vec.empty());
+	NoeudA a = vec[0];
+	vec.erase(vec.begin());
+	return a;
+}
+
+bool Game_Interpreter::CommandActivateEventAt(lcf::rpg::EventCommand const& com) {
+
+
+	int x = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int y = ValueOrVariable(com.parameters[2], com.parameters[3]);
+
+	// Output::Debug("ActiveEvent : {} {}", x, y);
+
+	bool b = Main_Data::game_player->ActivateEventAt(x, y);
+
+	return true;
 }
