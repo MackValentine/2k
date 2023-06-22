@@ -284,6 +284,8 @@ protected:
 	bool CommandManiacChangePictureId(lcf::rpg::EventCommand const& com);
 	bool CommandManiacSetGameOption(lcf::rpg::EventCommand const& com);
 	bool CommandManiacCallCommand(lcf::rpg::EventCommand const& com);
+	bool CommandCallMovement(lcf::rpg::EventCommand const& com);
+	bool CommandWaitForMovement(lcf::rpg::EventCommand const& com);
 
 	int DecodeInt(lcf::DBArray<int32_t>::const_iterator& it);
 	const std::string DecodeString(lcf::DBArray<int32_t>::const_iterator& it);
