@@ -1319,7 +1319,8 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionAc
 							// Change cursor (Hand)
 							DisplayUi->ChangeCursor(1);
 
-							if (Input::IsPressed(Input::MOUSE_LEFT) || Input::IsReleased(Input::MOUSE_LEFT)) {
+							//if (Input::IsPressed(Input::MOUSE_LEFT) || Input::IsReleased(Input::MOUSE_LEFT)) {
+							if (Input::mouseHover() || Input::IsReleased(Input::MOUSE_LEFT)) {
 								if (status_window->GetIndex() != i)
 									Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cursor));
 								status_window->SetIndex(i);
@@ -1650,7 +1651,8 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionEn
 						// Change cursor (Hand)
 						DisplayUi->ChangeCursor(1);
 
-						if (Input::IsPressed(Input::MOUSE_LEFT)) {
+						//if (Input::IsPressed(Input::MOUSE_LEFT)) {
+						if (Input::mouseHover()) {
 							if (status_window->GetIndex() != i)
 								Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cursor));
 							target_window->SetIndex(i);
@@ -1738,7 +1740,8 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionAl
 						// Change cursor (Hand)
 						DisplayUi->ChangeCursor(1);
 
-						if (Input::IsPressed(Input::MOUSE_LEFT)) {
+						//if (Input::IsPressed(Input::MOUSE_LEFT)) {
+						if (Input::mouseHover()) {
 							if (status_window->GetIndex() != i)
 								Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cursor));
 							status_window->SetIndex(i);

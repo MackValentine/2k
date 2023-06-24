@@ -421,7 +421,7 @@ void Window_Message::Update() {
 					if (Input::IsPressed(Input::MOUSE_LEFT)) {
 						if (index != -999 && index != -1)
 							mouseOldIndex = index;
-						index = -1;
+						//index = -1;
 					}
 					// Change cursor (Hand)
 					DisplayUi->ChangeCursor(1);
@@ -502,7 +502,8 @@ void Window_Message::Update() {
 					index = mouseOldIndex;
 				}
 				UpdateArrows();
-				Window_Base::Update();
+				//Window_Base::Update();
+				Window_Selectable::Update();
 				return;
 			}
 		}
@@ -514,7 +515,8 @@ void Window_Message::Update() {
 
 		if (index == -999) {
 			UpdateArrows();
-			Window_Base::Update();
+			//Window_Base::Update();
+			Window_Selectable::Update();
 			number_input_window->Update();
 			return;
 		}
