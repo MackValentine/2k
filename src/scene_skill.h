@@ -23,6 +23,7 @@
 #include "window_help.h"
 #include "window_skill.h"
 #include "window_skillstatus.h"
+#include "scene_menu.h"
 
 /**
  * Scene_Skill class.
@@ -51,6 +52,8 @@ private:
 	std::unique_ptr<Window_SkillStatus> skillstatus_window;
 	/** Displays description about the selected skill. */
 	std::unique_ptr<Window_Help> help_window;
+
+	std::unique_ptr<Spriteset_Map> spriteset;
 };
 
 #endif

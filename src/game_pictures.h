@@ -24,6 +24,8 @@
 #include "async_handler.h"
 #include <lcf/rpg/savepicture.h>
 #include "sprite_picture.h"
+#include <output.h>
+#include "scene.h"
 
 class Sprite_Picture;
 class Scene;
@@ -141,6 +143,34 @@ private:
 };
 
 inline bool Game_Pictures::Picture::IsOnMap() const {
+	
+	auto st = Scene::instance->type;
+	if (Scene::oldInstanceType) {
+		//Output::Debug("{} {} {}", data.map_layer, st, Scene::oldInstanceType);
+		st = static_cast<Scene::SceneType>(Scene::oldInstanceType);
+	}
+
+	if (st == Scene::Menu) {
+		return data.map_layer == -10 || data.map_layer > 0;
+	} else 	if (st == Scene::Item) {
+		return data.map_layer == -11 || data.map_layer > 0;
+	}
+	else 	if (st == Scene::Skill) {
+		return data.map_layer == -12 || data.map_layer > 0;
+	}
+	else 	if (st == Scene::Equip) {
+		return data.map_layer == -13 || data.map_layer > 0;
+	}
+	else 	if (st == Scene::Status) {
+		return data.map_layer == -14 || data.map_layer > 0;
+	}
+	else 	if (st == Scene::Order) {
+		return data.map_layer == -15 || data.map_layer > 0;
+	}
+	else 	if (st == Scene::Null) {
+		return data.map_layer == -16 || data.map_layer > 0;
+	}
+
 	return data.map_layer > 0;
 }
 

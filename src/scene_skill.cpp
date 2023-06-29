@@ -31,6 +31,9 @@
 Scene_Skill::Scene_Skill(int actor_index, int skill_index) :
 	actor_index(actor_index), skill_index(skill_index) {
 	Scene::type = Scene::Skill;
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Skill::Start() {
@@ -46,6 +49,21 @@ void Scene_Skill::Start() {
 	skillstatus_window->SetActor(Main_Data::game_party->GetActors()[actor_index]->GetId());
 	skill_window->SetIndex(skill_index);
 	skill_window->SetHelpWindow(help_window.get());
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+	}
+
+	if (SceneMenu::noBackground) {
+		help_window->SetBackOpacity(0);
+		skillstatus_window->SetBackOpacity(0);
+		skill_window->SetBackOpacity(0);
+
+		help_window->SetFrameOpacity(0);
+		skillstatus_window->SetFrameOpacity(0);
+		skill_window->SetFrameOpacity(0);
+
+	}
 }
 
 void Scene_Skill::Continue(SceneType) {
@@ -54,6 +72,12 @@ void Scene_Skill::Continue(SceneType) {
 }
 
 void Scene_Skill::vUpdate() {
+
+	if (SceneMenu::showMap) {
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
+
 	help_window->Update();
 	skillstatus_window->Update();
 	skill_window->Update();

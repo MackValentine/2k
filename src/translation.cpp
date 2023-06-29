@@ -453,6 +453,15 @@ namespace {
 			return CurrentCmdCode() == lcf::rpg::EventCommand::Code::ShowMessage_2;
 		}
 
+
+		
+		bool CurrentIsComment2() const {
+			return CurrentCmdCode() == lcf::rpg::EventCommand::Code::Comment_2;
+		}
+		bool CurrentIsEditMenu() const {
+			return CurrentCmdCode() == lcf::rpg::EventCommand::Code::CommandEditMenu;
+		}
+
 		/** Returns true if the current Event Command is ShowChoice */
 		bool CurrentIsShowChoice() const {
 			return CurrentCmdCode() == lcf::rpg::EventCommand::Code::ShowChoice;
@@ -510,6 +519,23 @@ namespace {
 			while (!Done() && CurrentIsShowMessage2()) {
 				msg_str << CurrentCmdString() <<"\n";
 				indexes.push_back(index);
+				Advance();
+			}
+		}
+
+		void BuildEditString(std::stringstream& msg_str, std::vector<size_t>& indexes) {
+			// No change if we're not on the right command.
+			if (Done() || !CurrentIsEditMenu()) {
+				return;
+			}
+			Advance();
+
+			// Build lines 2 through 4
+			while (!Done() && (CurrentIsShowMessage2() || CurrentIsComment2())) {
+				if (CurrentIsShowMessage2()) {
+					msg_str << CurrentCmdString() << "\n";
+					indexes.push_back(index);
+				}
 				Advance();
 			}
 		}
@@ -772,6 +798,60 @@ void Translation::RewriteEventCommandMessage(const Dictionary& dict, std::vector
 				// Reintegrate the term
 				commands.CurrentCmdString() = lcf::DBString(Utils::ReplaceAll(ToString(commands.CurrentCmdString()), "\x01" + components[1] + "\x01", "\x01" + term + "\x01"));
 			}
+			commands.Advance();
+		}
+		else if (commands.CurrentIsEditMenu()) {
+
+			std::stringstream msg_str;
+			std::vector<size_t> msg_indexes;
+			commands.BuildEditString(msg_str, msg_indexes);
+
+			std::string msgStr = msg_str.str();
+			std::vector<std::vector<std::string>> msgs = TranslateMessageStream(dict, msg_str, '\n');
+
+			if (msgs.size() > 0) {
+				// The complex replacement logic is based on the last message box, then all remaining things are simply left back in.
+				std::vector<std::string>& lines = msgs.back();
+
+				// There is a special case here: if we are asked to remove a message box, we should do nothing further
+					// This command is *only* respected as the first line of a message box.
+				if (lines[0] == TRCUST_REMOVEMSG) {
+					// Clear all message boxes in reverse order.
+					while (!msg_indexes.empty()) {
+						commands.RemoveByIndex(msg_indexes.back());
+						msg_indexes.pop_back();
+					}
+				}
+				else {
+					// Trim lines down to allowed remaining (with choices).
+					const size_t maxLines = 4;
+					while (lines.size() > maxLines) {
+						lines.pop_back();
+					}
+
+					// First, pop extra entries from the back of msg_cmd; this preserves the remaining entries' indexes
+					while (msg_indexes.size() > lines.size()) {
+						commands.RemoveByIndex(msg_indexes.back());
+						msg_indexes.pop_back();
+					}
+
+					// Next, push extra entries from the back of lines to msg_cmd
+					while (lines.size() > msg_indexes.size()) {
+						commands.PutShowMessageBeforeIndex("", msg_indexes.back() + 1, false);
+						msg_indexes.push_back(msg_indexes.back() + 1);
+					}
+
+					// Now simply go through each entry and update it.
+					for (size_t num = 0; num < msg_indexes.size(); num++) {
+						commands.ReWriteString(msg_indexes[num], lines[num]);
+					}
+				}
+				msgs.pop_back();
+
+				// Now add remianing messages, if any
+				commands.InsertMultiMessageBefore(msgs, msg_indexes[0]);
+			}
+
 			commands.Advance();
 		} else {
 			commands.Advance();

@@ -22,6 +22,8 @@
 #include "scene.h"
 #include "window_help.h"
 #include "window_item.h"
+#include "spriteset_map.h"
+#include "window_selectable.h"
 
 /**
  * Scene_Item class.
@@ -41,6 +43,9 @@ public:
 	void vUpdate() override;
 	void TransitionOut(Scene::SceneType next_scene) override;
 
+	Window_Selectable* GetWindow(int i);
+	int GetItemID();
+
 private:
 	/** Displays description about the selected item. */
 	std::unique_ptr<Window_Help> help_window;
@@ -48,6 +53,13 @@ private:
 	std::unique_ptr<Window_Item> item_window;
 	/** Index of item selected on startup. */
 	int item_index;
-};
 
+	std::unique_ptr<Spriteset_Map> spriteset;
+};
+inline Window_Selectable* Scene_Item::GetWindow(int i) {
+	if (i == 1)
+		return (Window_Selectable*) help_window.get();
+
+	return item_window.get();
+}
 #endif

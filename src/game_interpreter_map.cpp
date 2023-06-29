@@ -53,6 +53,10 @@
 #include "util_macro.h"
 #include "game_interpreter_map.h"
 #include <lcf/reader_lcf.h>
+#include <scene_item.h>
+#include <scene_status.h>
+#include <scene_equip.h>
+#include <scene_skill.h>
 
 enum EnemyEncounterSubcommand {
 	eOptionEnemyEncounterVictory = 0,
@@ -639,7 +643,7 @@ bool Game_Interpreter_Map::CommandOpenSaveMenu(lcf::rpg::EventCommand const& /* 
 	return false;
 }
 
-bool Game_Interpreter_Map::CommandOpenMainMenu(lcf::rpg::EventCommand const& /* com */) { // code 11950
+bool Game_Interpreter_Map::CommandOpenMainMenu(lcf::rpg::EventCommand const&  com ) { // code 11950
 	auto& frame = GetFrame();
 	auto& index = frame.current_command;
 
@@ -647,7 +651,22 @@ bool Game_Interpreter_Map::CommandOpenMainMenu(lcf::rpg::EventCommand const& /* 
 		return false;
 	}
 
-	Scene::instance->SetRequestedScene(std::make_shared<Scene_Menu>());
+	std::string param = ToString(com.string);
+	int actorID = com.parameters[1];
+	actorID = ValueOrVariable(com.parameters[0], actorID);
+
+	if (param == "Item")
+		Scene::instance->SetRequestedScene(std::make_shared<Scene_Item>());
+	else if (param == "Skill")
+		Scene::instance->SetRequestedScene(std::make_shared<Scene_Skill>(actorID, 0));
+	else if (param == "Equip") {
+		Game_Actor* actor = Main_Data::game_party->GetActor(actorID);
+		Scene::instance->SetRequestedScene(std::make_shared<Scene_Equip>(*actor, 0));
+	}
+	else if (param == "Status")
+		Scene::instance->SetRequestedScene(std::make_shared<Scene_Status>(actorID));
+	else
+		Scene::instance->SetRequestedScene(std::make_shared<Scene_Menu>());
 	++index;
 	return false;
 }

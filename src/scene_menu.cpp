@@ -35,14 +35,95 @@
 #include "scene_status.h"
 #include "bitmap.h"
 #include "feature.h"
+#include <output.h>
+#include <game_map.h>
+#include "game_switches.h"
+
 
 constexpr int menu_command_width = 88;
 constexpr int gold_window_width = 88;
 constexpr int gold_window_height = 32;
 
+namespace SceneMenu {
+	std::string menuLabels[MaxItems];
+	int menuBehaviour[MaxItems];
+
+	bool replaceCommands = false;
+
+	bool showMap = true;
+	bool noBackground = false;
+
+	int sortItemType = -1;
+
+	void Reset() {
+		Replace(false);
+		for (int i = 0; i < SceneMenu::MaxItems; i++) {
+			SceneMenu::menuLabels[i] = " ";
+			SceneMenu::menuBehaviour[i] = 0;
+		}
+	}
+
+	void Replace(bool b) {
+		replaceCommands = b;
+	}
+
+	std::vector<lcf::DBString> GetSaveData() {
+		std::vector<lcf::DBString> v;
+
+		// Add type menu
+		std::string s = std::to_string(replaceCommands);
+		v.push_back(lcf::DBString(s));
+
+		int m = MaxItems;
+		for (int i = 0; i < m ;i++) {
+			std::string cmd = std::to_string(SceneMenu::menuBehaviour[i]);
+			std::string s = SceneMenu::menuLabels[i] + "\n" + cmd;
+			v.push_back(lcf::DBString(s));
+		}
+		return v;
+	}
+
+	void SetSaveData(std::vector<lcf::DBString> datas) {
+		for (int i = 0; i <datas.size();i++) {
+			if (i == 0) {
+				bool b = false;
+				auto s = datas[i];
+				if (s == "1")
+					b = true;
+				Replace(b);
+			}
+			else {
+				auto s = ToString(datas[i]);
+				auto t = split(s, '\n');
+
+				SceneMenu::menuLabels[i - 1] = t[0];
+				SceneMenu::menuBehaviour[i - 1] = std::stoi(t[1]);
+			}
+		}
+	}
+
+	std::vector<std::string> split(const std::string& s, char seperator)
+	{
+		std::vector<std::string> output;
+		std::string::size_type prev_pos = 0, pos = 0;
+		while ((pos = s.find(seperator, pos)) != std::string::npos)
+		{
+			std::string substring(s.substr(prev_pos, pos - prev_pos));
+			output.push_back(substring);
+			prev_pos = ++pos;
+		}
+
+		output.push_back(s.substr(prev_pos, pos - prev_pos));
+		return output;
+	}
+}
+
 Scene_Menu::Scene_Menu(int menu_index) :
 	menu_index(menu_index) {
 	type = Scene::Menu;
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Menu::Start() {
@@ -54,7 +135,31 @@ void Scene_Menu::Start() {
 	// Status Window
 	menustatus_window.reset(new Window_MenuStatus(Player::menu_offset_x + menu_command_width, Player::menu_offset_y, (MENU_WIDTH - menu_command_width), MENU_HEIGHT));
 	menustatus_window->SetActive(false);
+
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext t;
+		Game_Map::UpdateCommonEvents(t);
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
+
+	if (SceneMenu::noBackground) {
+		gold_window->SetBackOpacity(0);
+		menustatus_window->SetBackOpacity(0);
+		command_window->SetBackOpacity(0);
+
+		gold_window->SetFrameOpacity(0);
+		menustatus_window->SetFrameOpacity(0);
+		command_window->SetFrameOpacity(0);
+
+	}
+
 }
+
 
 void Scene_Menu::Continue(SceneType /* prev_scene */) {
 	menustatus_window->Refresh();
@@ -62,6 +167,7 @@ void Scene_Menu::Continue(SceneType /* prev_scene */) {
 }
 
 void Scene_Menu::vUpdate() {
+
 	command_window->Update();
 	gold_window->Update();
 	menustatus_window->Update();
@@ -72,27 +178,41 @@ void Scene_Menu::vUpdate() {
 	else if (menustatus_window->GetActive()) {
 		UpdateActorSelection();
 	}
+
+	if (SceneMenu::showMap) {
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
 }
 
 void Scene_Menu::CreateCommandWindow() {
 	// Create Options Window
 	std::vector<std::string> options;
 
-	if (Player::IsRPG2k()) {
-		command_options.push_back(Item);
-		command_options.push_back(Skill);
-		command_options.push_back(Equipment);
-		command_options.push_back(Save);
-		if (Player::player_config.settings_in_menu.Get()) {
-			command_options.push_back(Settings);
+	if (!SceneMenu::replaceCommands) {
+		if (Player::IsRPG2k()) {
+			command_options.push_back(Item);
+			command_options.push_back(Skill);
+			command_options.push_back(Equipment);
+			command_options.push_back(Save);
+			if (Player::player_config.settings_in_menu.Get()) {
+				command_options.push_back(Settings);
+			}
+			if (Player::debug_flag) {
+				command_options.push_back(Debug);
+			}
+			command_options.push_back(Quit);
 		}
-		if (Player::debug_flag) {
-			command_options.push_back(Debug);
-		}
-		command_options.push_back(Quit);
-	} else {
-		for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
-			it != lcf::Data::system.menu_commands.end(); ++it) {
+		else {
+			for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
+				it != lcf::Data::system.menu_commands.end(); ++it) {
 				switch (*it) {
 				case Row:
 					if (Feature::HasRow()) {
@@ -108,14 +228,104 @@ void Scene_Menu::CreateCommandWindow() {
 					command_options.push_back((CommandOptionType)*it);
 					break;
 				}
+			}
+			if (Player::player_config.settings_in_menu.Get()) {
+				command_options.push_back(Settings);
+			}
+			if (Player::debug_flag) {
+				command_options.push_back(Debug);
+			}
+			command_options.push_back(Quit);
 		}
-		if (Player::player_config.settings_in_menu.Get()) {
-			command_options.push_back(Settings);
+	
+		// Change command behaviour
+		if (SceneMenu::menuLabels->size() > 0) {
+			int m = SceneMenu::MaxItems;
+			for (int i = 0; i < m; i++) {
+				if (SceneMenu::menuBehaviour[i] != 0) {
+					Scene_Menu::CommandOptionType type = Item;
+					switch (SceneMenu::menuBehaviour[i]) {
+					case -1:
+						type = Item;
+						break;
+					case -2:
+						type = Skill;
+						break;
+					case -3:
+						type = Equipment;
+						break;
+					case -4:
+						type = Save;
+						break;
+					case -5:
+						type = Status;
+						break;
+					case -6:
+						type = Row;
+						break;
+					case -7:
+						type = Order;
+						break;
+					case -8:
+						type = Wait;
+						break;
+					case -9:
+						type = Quit;
+						break;
+					default:
+						type = Item;
+					}
+					if (i< command_options.size())
+						command_options[i] = type;
+				}
+			}
 		}
-		if (Player::debug_flag) {
-			command_options.push_back(Debug);
+	}
+	else {
+		if (SceneMenu::menuLabels->size() > 0) {
+			int m = SceneMenu::MaxItems;
+			for (int i = 0; i < m; i++) {
+				if (SceneMenu::menuBehaviour[i] != 0) {
+					Scene_Menu::CommandOptionType type = Item;
+					switch (SceneMenu::menuBehaviour[i]) {
+					case -1:
+						type = Item;
+						break;
+					case -2:
+						type = Skill;
+						break;
+					case -3:
+						type = Equipment;
+						break;
+					case -4:
+						type = Save;
+						break;
+					case -5:
+						type = Status;
+						break;
+					case -6:
+						type = Row;
+						break;
+					case -7:
+						type = Order;
+						break;
+					case -8:
+						type = Wait;
+						break;
+					case -9:
+						type = Quit;
+						break;
+					default:
+						if (SceneMenu::menuBehaviour[i] > 0) {
+							type = CommonEvent;
+						} else
+							type = Item;
+					}
+
+					command_options.push_back(type);
+				}
+			}
 		}
-		command_options.push_back(Quit);
 	}
 
 	// Add all menu items
@@ -155,6 +365,18 @@ void Scene_Menu::CreateCommandWindow() {
 		default:
 			options.push_back(ToString(lcf::Data::terms.menu_quit));
 			break;
+		}
+	}
+
+
+	if (SceneMenu::menuLabels->size() > 0) {
+		int m = SceneMenu::MaxItems;
+		for (int i = 0; i < m; i++) {
+			
+			if (SceneMenu::menuBehaviour[i] != 0 && i < options.size()) {
+				auto s = SceneMenu::menuLabels[i];
+				options[i] = s;
+			}
 		}
 	}
 
@@ -253,6 +475,14 @@ void Scene_Menu::UpdateCommand() {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
 			Scene::Push(std::make_shared<Scene_End>());
 			break;
+		case CommonEvent:
+			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
+			int i = command_window->GetIndex();
+			Main_Data::game_switches->Set(SceneMenu::menuBehaviour[i], true);
+			Scene::PopUntil(Scene::Map);
+			Game_Map::SetNeedRefresh(true);
+			//Output::Debug("Switch : {}", SceneMenu::menuBehaviour[i]);
+			break;
 		}
 	}
 }
@@ -312,4 +542,10 @@ void Scene_Menu::UpdateActorSelection() {
 		menustatus_window->SetActive(false);
 		menustatus_window->SetIndex(-1);
 	}
+}
+
+int Scene_Menu::GetItemID() {
+	if (Main_Data::game_party->GetActor(menustatus_window->GetIndex()))
+		return Main_Data::game_party->GetActor(menustatus_window->GetIndex())->GetId();
+	return 0;
 }

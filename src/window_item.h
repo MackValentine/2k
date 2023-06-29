@@ -78,10 +78,14 @@ public:
 	 */
 	void SetActor(Game_Actor* actor);
 
+	int GetMaxItem();
 private:
 	std::vector<int> data;
 
 	Game_Actor* actor = nullptr;
 };
 
+inline int Window_Item::GetMaxItem() {
+	return data.size();
+}
 #endif

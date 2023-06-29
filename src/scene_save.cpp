@@ -44,6 +44,8 @@
 #include "translation.h"
 #include "version.h"
 
+#include <scene_menu.h>
+
 Scene_Save::Scene_Save() :
 	Scene_File(ToString(lcf::Data::terms.save_game_message)) {
 	Scene::type = Scene::Save;
@@ -143,6 +145,8 @@ bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 	save.screen = Main_Data::game_screen->GetSaveData();
 	save.pictures = Main_Data::game_pictures->GetSaveData();
 	save.easyrpg_data.windows = Main_Data::game_windows->GetSaveData();
+
+	save.system.maniac_strings = SceneMenu::GetSaveData();
 
 	save.system.scene = Scene::instance ? Scene::rpgRtSceneFromSceneType(Scene::instance->type) : -1;
 

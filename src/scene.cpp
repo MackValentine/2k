@@ -37,6 +37,7 @@
 #define DEBUG_VALIDATE(x) do {} while(0)
 #endif
 
+int Scene::oldInstanceType;
 
 constexpr int Scene::kStartGameDelayFrames;
 constexpr int Scene::kReturnTitleDelayFrames;
@@ -166,13 +167,16 @@ void Scene::MainFunction() {
 				case ScenePushed:
 					Start();
 					initialized = true;
+					Scene::oldInstanceType = Scene::Null;
 					break;
 				case ScenePopped:
 					if (!initialized) {
 						Start();
 						initialized = true;
+						Scene::oldInstanceType = Scene::Null;
 					} else {
 						Continue(prev_scene_type);
+						Scene::oldInstanceType = Scene::Null;
 					}
 					break;
 				default:;
@@ -256,6 +260,8 @@ void Scene::Update() {
 }
 
 void Scene::Push(std::shared_ptr<Scene> const& new_scene, bool pop_stack_top) {
+	if (instance)
+		oldInstanceType = instance->type;
 	if (pop_stack_top) {
 		old_instances.push_back(instances.back());
 		instances.pop_back();
@@ -270,6 +276,8 @@ void Scene::Push(std::shared_ptr<Scene> const& new_scene, bool pop_stack_top) {
 }
 
 void Scene::Pop() {
+	if (instance)
+		oldInstanceType = instance->type;
 	old_instances.push_back(instances.back());
 	instances.pop_back();
 
@@ -281,6 +289,8 @@ void Scene::Pop() {
 }
 
 void Scene::PopUntil(SceneType type) {
+	if (instance)
+		oldInstanceType = instance->type;
 	int count = 0;
 
 	for (int i = (int)instances.size() - 1 ; i >= 0; --i) {

@@ -23,13 +23,15 @@
 #include "main_data.h"
 #include <lcf/reader_util.h>
 #include <cassert>
+#include <scene.h>
+#include <output.h>
 
 Game_CommonEvent::Game_CommonEvent(int common_event_id) :
 	common_event_id(common_event_id)
 {
 	auto* ce = lcf::ReaderUtil::GetElement(lcf::Data::commonevents, common_event_id);
 
-	if (ce->trigger == lcf::rpg::EventPage::Trigger_parallel
+	if ((ce->trigger == lcf::rpg::EventPage::Trigger_parallel || ce->trigger == 7)
 			&& !ce->event_commands.empty()) {
 		interpreter.reset(new Game_Interpreter_Map());
 		interpreter->Push(this);
@@ -110,6 +112,17 @@ bool Game_CommonEvent::IsWaitingForegroundExecution() const {
 
 bool Game_CommonEvent::IsWaitingBackgroundExecution(bool force_run) const {
 	auto* ce = lcf::ReaderUtil::GetElement(lcf::Data::commonevents, common_event_id);
+
+	if (Scene::instance->type == Scene::SceneType::Menu ||
+		Scene::instance->type == Scene::SceneType::Item ||
+		Scene::instance->type == Scene::SceneType::Skill ||
+		Scene::instance->type == Scene::SceneType::Equip ||
+		Scene::instance->type == Scene::SceneType::Status ||
+		Scene::instance->type == Scene::SceneType::Order) {
+		return ce->trigger == 7 &&
+			(force_run || !ce->switch_flag || Main_Data::game_switches->Get(ce->switch_id));
+	}
+
 	return ce->trigger == lcf::rpg::EventPage::Trigger_parallel &&
 		(force_run || !ce->switch_flag || Main_Data::game_switches->Get(ce->switch_id));
 }

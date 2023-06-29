@@ -23,10 +23,14 @@
 #include "game_system.h"
 #include "input.h"
 #include <player.h>
+#include "game_map.h"
 
 Scene_Status::Scene_Status(int actor_index) :
 	actor_index(actor_index) {
 	type = Scene::Status;
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Status::Start() {
@@ -53,12 +57,56 @@ void Scene_Status::Start() {
 	paramstatus_window->SetActive(false);
 
 	equip_window->SetIndex(-1);
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+
+	}
+
+	if (SceneMenu::noBackground) {
+		actorinfo_window->SetBackOpacity(0);
+		gold_window->SetBackOpacity(0);
+		actorstatus_window->SetBackOpacity(0);
+		paramstatus_window->SetBackOpacity(0);
+		equip_window->SetBackOpacity(0);
+
+		actorinfo_window->SetFrameOpacity(0);
+		gold_window->SetFrameOpacity(0);
+		actorstatus_window->SetFrameOpacity(0);
+		paramstatus_window->SetFrameOpacity(0);
+		equip_window->SetFrameOpacity(0);
+
+	}
 }
 
 void Scene_Status::vUpdate() {
+
 	gold_window->Update();
 	paramstatus_window->Update();
 	equip_window->Update();
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+
+	}
 
 	if (Input::IsTriggered(Input::CANCEL)) {
 		Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cancel));
@@ -72,4 +120,9 @@ void Scene_Status::vUpdate() {
 		actor_index = (actor_index + Main_Data::game_party->GetActors().size() - 1) % Main_Data::game_party->GetActors().size();
 		Scene::Push(std::make_shared<Scene_Status>(actor_index), true);
 	}
+}
+
+int Scene_Status::GetItemID()
+{
+	return Main_Data::game_party->GetActors()[actor_index]->GetId();
 }

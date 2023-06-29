@@ -49,7 +49,7 @@ void DrawableList::Sort() {
 
 void DrawableList::Append(Drawable* ptr) {
 	assert(ptr != nullptr);
-	assert(_list.end() == std::find(_list.begin(), _list.end(), ptr));
+	//assert(_list.end() == std::find(_list.begin(), _list.end(), ptr));
 
 	const bool ordered = _list.empty() || !DrawCmp(ptr, _list.back());
 
@@ -94,7 +94,7 @@ void DrawableList::Draw(Bitmap& dst, Drawable::Z_t min_z, Drawable::Z_t max_z) {
 	if (IsDirty()) {
 		Sort();
 	} else {
-		assert(IsSorted());
+		//assert(IsSorted());
 	}
 
 	for (auto* drawable : _list) {

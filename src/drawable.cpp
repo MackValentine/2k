@@ -62,6 +62,24 @@ Drawable::Z_t Drawable::GetPriorityForMapLayer(int which) {
 		case lcf::rpg::SavePicture::MapLayer_timers:
 			layer = Priority_Timer;
 			break;
+		case -11:
+			layer = Priority_BattleAnimation;
+			break;
+		case -12:
+			layer = Priority_BattleAnimation;
+			break;
+		case -13:
+			layer = Priority_BattleAnimation;
+			break;
+		case -14:
+			layer = Priority_BattleAnimation;
+			break;
+		case -15:
+			layer = Priority_BattleAnimation;
+			break;
+		case -16:
+			layer = Priority_BattleAnimation;
+			break;
 		default:
 			return layer;
 	}

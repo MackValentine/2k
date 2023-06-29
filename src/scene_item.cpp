@@ -26,14 +26,19 @@
 #include "input.h"
 #include <lcf/reader_util.h>
 #include "scene_actortarget.h"
-#include "scene_map.h"
+#include "game_map.h"
 #include "scene_teleport.h"
 #include "output.h"
 #include "transition.h"
+#include <scene_menu.h>
 
 Scene_Item::Scene_Item(int item_index) :
 	item_index(item_index) {
 	Scene::type = Scene::Item;
+
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Item::Start() {
@@ -44,6 +49,29 @@ void Scene_Item::Start() {
 	item_window->SetHelpWindow(help_window.get());
 	item_window->Refresh();
 	item_window->SetIndex(item_index);
+	help_window->SetZ(item_window->GetZ() + 1);
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
+
+	if (SceneMenu::noBackground) {
+		help_window->SetBackOpacity(0);
+		item_window->SetBackOpacity(0);
+
+		help_window->SetFrameOpacity(0);
+		item_window->SetFrameOpacity(0);
+
+	}
 }
 
 void Scene_Item::Continue(SceneType /* prev_scene */) {
@@ -51,6 +79,7 @@ void Scene_Item::Continue(SceneType /* prev_scene */) {
 }
 
 void Scene_Item::vUpdate() {
+
 	help_window->Update();
 	item_window->Update();
 
@@ -108,6 +137,23 @@ void Scene_Item::vUpdate() {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
 		}
 	}
+
+	if (SceneMenu::showMap) {
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+
+		int m = Main_Data::game_pictures->GetDefaultNumberOfPictures();
+		for (int i = 1; i < m; i++) {
+			auto pict = Main_Data::game_pictures->GetPicture(i).data;
+			if (pict.fixed_to_map && pict.map_layer == -11)
+				Main_Data::game_pictures->GetPicture(i).data.current_y -= item_window->GetScrollProgress();
+		}
+	}
 }
 
 void Scene_Item::TransitionOut(Scene::SceneType next_scene) {
@@ -122,4 +168,10 @@ void Scene_Item::TransitionOut(Scene::SceneType next_scene) {
 	} else {
 		Scene::TransitionOut(next_scene);
 	}
+}
+int Scene_Item::GetItemID() {
+	if (item_window->GetItem())
+		return item_window->GetItem()->ID;
+
+	return 0;
 }

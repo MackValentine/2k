@@ -32,6 +32,7 @@
 #include <lcf/rpg/saveeventexecstate.h>
 #include <lcf/flag_set.h>
 #include "async_op.h"
+#include "window_selectable.h"
 
 class Game_Event;
 class Game_CommonEvent;
@@ -283,6 +284,21 @@ protected:
 	bool CommandManiacChangePictureId(lcf::rpg::EventCommand const& com);
 	bool CommandManiacSetGameOption(lcf::rpg::EventCommand const& com);
 	bool CommandManiacCallCommand(lcf::rpg::EventCommand const& com);
+
+	// Custom Commands
+	bool CommandSearchPath(lcf::rpg::EventCommand const& com);
+	bool CommandActivateEventAt(lcf::rpg::EventCommand const& com);
+	bool CommandCustomConditions(lcf::rpg::EventCommand const& com);
+	bool CommandSortItem(lcf::rpg::EventCommand const& com);
+
+
+	void CommandEditMenuMoveWindow(Window_Selectable* window, std::string commandName, lcf::DBArray<int32_t> parameters);
+	void CommandEditMenuGetIndex(std::string commandName, lcf::DBArray<int32_t> parameters);
+	void CommandEditMenuGetCursor(std::string commandName, lcf::DBArray<int32_t> parameters);
+	Window_Selectable* CommandEditMenuGetWindow(std::string commandName, lcf::DBArray<int32_t> parameters);
+	void CommandEditMenuSetOpacity(std::string commandName, lcf::DBArray<int32_t> parameters);
+
+	bool CommandEditMenu(lcf::rpg::EventCommand const&);
 
 	int DecodeInt(lcf::DBArray<int32_t>::const_iterator& it);
 	const std::string DecodeString(lcf::DBArray<int32_t>::const_iterator& it);

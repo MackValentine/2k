@@ -25,6 +25,7 @@
 #include "window_equip.h"
 #include "window_paramstatus.h"
 #include "window_gold.h"
+#include "scene_menu.h"
 
 /**
  * Scene Status class.
@@ -42,6 +43,9 @@ public:
 	void Start() override;
 	void vUpdate() override;
 
+	Window_Selectable* GetWindow(int i);
+	int GetItemID();
+
 private:
 	int actor_index;
 
@@ -50,6 +54,20 @@ private:
 	std::unique_ptr<Window_Gold> gold_window;
 	std::unique_ptr<Window_ParamStatus> paramstatus_window;
 	std::unique_ptr<Window_Equip> equip_window;
+
+	std::unique_ptr<Spriteset_Map> spriteset;
 };
 
+inline Window_Selectable* Scene_Status::GetWindow(int i) {
+	if (i == 1)
+		return (Window_Selectable*) actorstatus_window.get();
+	if (i == 2)
+		return (Window_Selectable*) gold_window.get();
+	if (i == 3)
+		return (Window_Selectable*) paramstatus_window.get();
+	if (i == 4)
+		return (Window_Selectable*)equip_window.get();
+
+	return (Window_Selectable*) actorinfo_window.get();
+}
 #endif

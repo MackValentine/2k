@@ -92,6 +92,8 @@ public:
 	 */
 	void SetMenuItemHeight(int height);
 
+	int GetScrollProgress();
+
 protected:
 	void UpdateArrows();
 
@@ -113,4 +115,7 @@ inline void Window_Selectable::SetItemMax(int value) {
 	item_max = value;
 }
 
+inline int Window_Selectable::GetScrollProgress() {
+	return (menu_item_height * scroll_progress / 4) * scroll_dir;
+}
 #endif

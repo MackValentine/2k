@@ -25,29 +25,69 @@
 #include "game_player.h"
 #include "game_system.h"
 #include "input.h"
-#include "scene_map.h"
+#include "game_map.h"
 
 Scene_Order::Scene_Order() :
 	actor_counter(0) {
 	type = Scene::Order;
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Order::Start() {
 	actors.resize(Main_Data::game_party->GetActors().size());
 
 	CreateCommandWindow();
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+
+	}
+
+	if (SceneMenu::noBackground) {
+		window_left->SetBackOpacity(0);
+		window_right->SetBackOpacity(0);
+
+		window_left->SetFrameOpacity(0);
+		window_right->SetFrameOpacity(0);
+
+	}
 }
 
 void Scene_Order::vUpdate() {
+
 	window_left->Update();
 	window_right->Update();
 	window_confirm->Update();
+
+	if (SceneMenu::showMap) {
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
 
 	if (window_left->GetActive()) {
 		UpdateOrder();
 	} else if (window_confirm->GetActive()) {
 		UpdateConfirm();
 	}
+
 }
 
 void Scene_Order::UpdateOrder() {
@@ -171,4 +211,11 @@ void Scene_Order::Confirm() {
 	}
 
 	// TODO: Where is the best place to overwrite the character map graphic?
+}
+
+int Scene_Order::GetItemID() {
+	if (Main_Data::game_party->GetActor(window_left->GetIndex()))
+		return Main_Data::game_party->GetActor(window_left->GetIndex())->GetId();
+
+	return 0;
 }

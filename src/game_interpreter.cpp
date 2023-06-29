@@ -66,6 +66,11 @@
 #include "baseui.h"
 #include "algo.h"
 #include "rand.h"
+#include <scene_menu.h>
+#include <scene_order.h>
+#include <scene_item.h>
+#include <scene_equip.h>
+#include <scene_status.h>
 
 enum BranchSubcommand {
 	eOptionBranchElse = 1
@@ -818,6 +823,12 @@ bool Game_Interpreter::ExecuteCommand() {
 			return CommandManiacSetGameOption(com);
 		case Cmd::Maniac_CallCommand:
 			return CommandManiacCallCommand(com);
+		case Cmd::CommandEditMenu:
+			return CommandEditMenu(com);
+		case Cmd::CommandCustomConditions:
+			return CommandCustomConditions(com);
+		case Cmd::CommandSortItem:
+			return CommandSortItem(com);
 		default:
 			return true;
 	}
@@ -4679,4 +4690,535 @@ bool Game_Interpreter::ManiacCheckContinueLoop(int val, int val2, int type, int 
 		default:
 			return false;
 	}
+}
+
+bool Game_Interpreter::CommandSortItem(lcf::rpg::EventCommand const& com) {
+	int val = com.parameters[1];
+	val = ValueOrVariable(com.parameters[0], val);
+	SceneMenu::sortItemType = val;
+	//Output::Debug("Sort type : {}", val);
+
+	Scene_Item* scene = (Scene_Item*)Scene::Find(Scene::Item).get();
+	if (scene) {
+		Window_Item* w = (Window_Item*) scene->GetWindow(0);
+		if (w) {
+			
+			w->Refresh();
+			if (w->GetTopRow() < w->GetPageRowMax()) {
+				int i = w->GetTopRow() - w->GetPageRowMax();
+				w->SetTopRow(i);
+			}
+		}
+	}
+	else {
+		Output::Warning("Not in Scene_Item !");
+	}
+
+	return true;
+}
+
+
+bool Game_Interpreter::CommandEditMenu(lcf::rpg::EventCommand const& com) {
+	auto& frame = GetFrame();
+	const auto& list = frame.commands;
+	auto& index = frame.current_command;
+
+	int menuID = 0;
+	int type = 0;
+
+	if (SceneMenu::menuLabels->size() == 0) {
+		SceneMenu::Reset();
+	}
+
+	for (int i = index + 1; i < list.size(); i++) {
+		const auto& cmd = list[i];
+
+		const int32_t msg2 = static_cast<int>(Cmd::ShowMessage_2);
+		const int32_t com2 = static_cast<int>(Cmd::Comment_2);
+
+		if (cmd.code == com2 && !cmd.string.empty() && cmd.string[0] != '@') {
+			std::string c = ToString(cmd.string);
+			if (c == "Edit") {
+				SceneMenu::Reset();
+				type = 0;
+			}
+			else if (c == "Reset") {
+				SceneMenu::Reset();
+				type = -1;
+			}
+			else if (c == "Replace") {
+				type = 1;
+				SceneMenu::Reset();
+				SceneMenu::Replace(true);
+			}
+			else if (c == "Move") {
+				type = 2;
+			}
+			else if (c == "GetItemID") {
+				type = 3;
+			}
+			else if (c == "GetCursor") {
+				type = 4;
+			}
+			else if (c == "Opacity") {
+				type = 5;
+			}
+		}
+		else if (cmd.code == msg2 && !cmd.string.empty() && cmd.string[0] != '@') {
+
+			std::string commandName = ToString(cmd.string);
+
+			if (type == 0) {
+				SceneMenu::menuLabels[cmd.parameters[0]] = commandName;
+				SceneMenu::menuBehaviour[cmd.parameters[0]] = cmd.parameters[1];
+			}
+			else if (type == 1) {
+				SceneMenu::menuLabels[menuID] = commandName;
+				SceneMenu::menuBehaviour[menuID] = cmd.parameters[0];
+			}
+			else if (type == 2) {
+				Window_Selectable* window = CommandEditMenuGetWindow(commandName, cmd.parameters);
+				if (window)
+					CommandEditMenuMoveWindow(window, commandName, cmd.parameters);
+			}
+			else if (type == 3) {
+
+				CommandEditMenuGetIndex(commandName, cmd.parameters);
+			}
+			else if (type == 4) {
+
+				CommandEditMenuGetCursor(commandName, cmd.parameters);
+			}
+			else if (type == 5) {
+
+				CommandEditMenuSetOpacity(commandName, cmd.parameters);
+			}
+			menuID++;
+		}
+		else {
+			break;
+		}
+		
+	}
+
+	return true;
+}
+
+void Game_Interpreter::CommandEditMenuSetOpacity(std::string commandName, lcf::DBArray<int32_t> parameters) {
+	Window_Selectable* window = CommandEditMenuGetWindow(commandName, parameters);
+	if (window) {
+		window->SetBackOpacity(parameters[0]);
+		window->SetFrameOpacity(parameters[1]);
+	}
+}
+
+
+Window_Selectable*  Game_Interpreter::CommandEditMenuGetWindow(std::string commandName, lcf::DBArray<int32_t> parameters) {
+	Window_Selectable* window = nullptr;
+	if (commandName == "Order.orderLeft" || commandName == "Order.orderRight") {
+		int id = 0;
+		if (commandName == "Order.orderRight")
+			id = 1;
+		Scene_Order* scene = (Scene_Order*)Scene::Find(Scene::Order).get();
+		if (scene) {
+			if (scene->GetWindow(id)) {
+				window = scene->GetWindow(id);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Order !");
+		}
+	}
+	else if (commandName == "Menu.commands") {
+		Scene_Menu* scene = (Scene_Menu*)Scene::Find(Scene::Menu).get();
+		if (scene) {
+			if (scene->GetWindow(0)) {
+				window = scene->GetWindow(0);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Menu !");
+		}
+	}
+	else if (commandName == "Menu.status") {
+		Scene_Menu* scene = (Scene_Menu*)Scene::Find(Scene::Menu).get();
+		if (scene) {
+			if (scene->GetWindow(1)) {
+				window = scene->GetWindow(1);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Menu !");
+		}
+	}
+	else if (commandName == "Item.commands") {
+		Scene_Item* scene = (Scene_Item*)Scene::Find(Scene::Item).get();
+		if (scene) {
+			if (scene->GetWindow(0)) {
+				window = scene->GetWindow(0);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Item !");
+		}
+	}
+	else if (commandName == "Item.help") {
+		Scene_Item* scene = (Scene_Item*)Scene::Find(Scene::Item).get();
+		if (scene) {
+			if (scene->GetWindow(1)) {
+				window = scene->GetWindow(1);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Item !");
+		}
+	}
+	else if (commandName == "Equip.commands") {
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+			if (scene->GetWindow(0)) {
+				window = scene->GetWindow(0);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Equip.status") {
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+			if (scene->GetWindow(2)) {
+				window = scene->GetWindow(2);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Equip.items") {
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+			int arr[] = { -1,-2,-3,-4,-5 };
+			for (int i : arr)
+				if (scene->GetWindow(i)) {
+					window = scene->GetWindow(i);
+					if (window)
+						CommandEditMenuMoveWindow(window, commandName, parameters);
+				}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Equip.current_item") {
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+			if (scene->GetWindow(3)) {
+				window = scene->GetWindow(3);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Equip.help") {
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+			if (scene->GetWindow(1)) {
+				window = scene->GetWindow(1);
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Status.all") {
+		Scene_Status* scene = (Scene_Status*)Scene::Find(Scene::Status).get();
+		if (scene) {
+			int arr[] = {0,1,2,3,4};
+			for (int i : arr)
+				if (scene->GetWindow(i)) {
+					window = scene->GetWindow(i);
+					if (window)
+						CommandEditMenuMoveWindow(window, commandName, parameters);
+				}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+
+	return window;
+}
+void Game_Interpreter::CommandEditMenuGetCursor(std::string commandName, lcf::DBArray<int32_t> parameters) {
+	if (commandName == "Item.commands") {
+		Scene_Item* scene = (Scene_Item*)Scene::Find(Scene::Item).get();
+		if (scene) {
+			if (scene->GetWindow(0)) {
+				int varXID = parameters[1];
+				varXID = ValueOrVariable(parameters[0], varXID);
+				Main_Data::game_variables->Set(varXID, 0);
+
+				int varYID = parameters[3];
+				varYID = ValueOrVariable(parameters[2], varYID);
+				Main_Data::game_variables->Set(varYID, 0);
+
+
+				if (scene->GetWindow(0)) {
+
+					int valX = scene->GetWindow(0)->GetCursorRect().x + 4;
+					int valY = scene->GetWindow(0)->GetCursorRect().y + 4;
+
+					Main_Data::game_variables->Set(varXID, valX);
+					Main_Data::game_variables->Set(varYID, valY);
+
+				}
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Item !");
+		}
+	}
+}
+
+void Game_Interpreter::CommandEditMenuGetIndex(std::string commandName, lcf::DBArray<int32_t> parameters) {
+
+	//Output::Debug("{} {} {} {}", parameters[0], parameters[1], parameters[2], parameters[3]);
+
+	if (commandName == "Order.orderLeft") {
+		int id = 0;
+		Scene_Order* scene = (Scene_Order*)Scene::Find(Scene::Order).get();
+		if (scene) {
+
+			int varID = parameters[1];
+
+			varID = ValueOrVariable(parameters[0], varID);
+
+			Main_Data::game_variables->Set(varID, 0);
+
+
+			if (scene->GetWindow(id)) {
+
+				int val = scene->GetItemID();
+
+				Main_Data::game_variables->Set(varID, val);
+
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Order !");
+		}
+	} else if (commandName == "Menu.status") {
+		int id = 1;
+		Scene_Menu* scene = (Scene_Menu*)Scene::Find(Scene::Menu).get();
+		if (scene) {
+
+			int varID = parameters[1];
+
+			varID = ValueOrVariable(parameters[0], varID);
+
+			Main_Data::game_variables->Set(varID, 0);
+
+
+			if (scene->GetWindow(id)) {
+
+				int val = scene->GetItemID();
+
+				Main_Data::game_variables->Set(varID, val);
+
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Menu !");
+		}
+	}
+	else if (commandName == "Item.commands") {
+		int id = 0;
+		Scene_Item* scene = (Scene_Item*)Scene::Find(Scene::Item).get();
+		if (scene) {
+
+			int varID = parameters[1];
+
+			varID = ValueOrVariable(parameters[0], varID);
+
+			Main_Data::game_variables->Set(varID, 0);
+
+
+			if (scene->GetWindow(id)) {
+
+				int val = scene->GetItemID();
+
+				Main_Data::game_variables->Set(varID, val);
+
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Item !");
+		}
+	}
+	else if (commandName == "Equip.commands") {
+		int id = 0;
+		Scene_Equip* scene = (Scene_Equip*)Scene::Find(Scene::Equip).get();
+		if (scene) {
+
+			int varID = parameters[1];
+
+			varID = ValueOrVariable(parameters[0], varID);
+
+			Main_Data::game_variables->Set(varID, 0);
+
+
+			if (scene->GetWindow(id)) {
+
+				int val = scene->GetItemID(id);
+
+				Main_Data::game_variables->Set(varID, val);
+
+			}
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+	else if (commandName == "Status") {
+		int id = 0;
+		Scene_Status* scene = (Scene_Status*)Scene::Find(Scene::Status).get();
+		if (scene) {
+
+			int varID = parameters[1];
+
+			varID = ValueOrVariable(parameters[0], varID);
+
+			int val = scene->GetItemID();
+
+			Main_Data::game_variables->Set(varID, val);
+
+		}
+		else {
+			Output::Warning("Not in Scene_Equip !");
+		}
+	}
+}
+
+void Game_Interpreter::CommandEditMenuMoveWindow(Window_Selectable* window, std::string commandName, lcf::DBArray<int32_t> parameters) {
+	int x = parameters[1];
+	int y = parameters[3];
+
+	x = ValueOrVariable(parameters[0], x);
+	y = ValueOrVariable(parameters[2], y);
+
+	int w = -1;
+	int h = -1;
+
+	if (parameters.size() > 5) {
+		w = parameters[5];
+		w = ValueOrVariable(parameters[4], w);
+	}
+	if (parameters.size() > 7) {
+		h = parameters[7];
+		h = ValueOrVariable(parameters[6], h);
+	}
+	bool visible = true;
+	if (parameters.size() > 8) {
+		if (parameters[8] == 1)
+			visible = false;
+		else if (parameters[8] == 2)
+			visible = window->GetActive();
+		else
+			visible = true;
+	}
+
+	int c = -1;
+	if (parameters.size() > 9) {
+		c = parameters[9];
+	}
+
+	if (window) {
+
+		window->SetX(x);
+		window->SetY(y);
+
+		if (w > 0)
+			window->SetWidth(w);
+		if (h > 0)
+			window->SetHeight(h);
+
+		window->SetVisible(visible);
+		if (c > 0) {
+			window->SetColumnMax(c);
+			window->UpdateCursorRect();
+
+			Window_Item* w = (Window_Item*) window;
+			if (w) {
+				w->Refresh();
+			}
+		}
+	}
+}
+
+
+bool Game_Interpreter::CommandCustomConditions(lcf::rpg::EventCommand const& com) {
+	//Output::Debug(" Test Conditionnel");
+	auto* frame = GetFramePtr();
+	const auto& list = frame->commands;
+	auto& index = frame->current_command;
+
+	auto ev = GetCharacter(com.parameters[1]);
+
+	auto st = Scene::instance->type;
+
+	for (int i = index + 1; i < list.size(); i++) {
+		const auto& cmd = list[i];
+
+		const int32_t choiceOption = static_cast<int>(Cmd::ShowChoiceOption);
+
+		if (cmd.code == choiceOption) {
+			if (cmd.string == "Moving?" && !ev->IsStopping()) { // Condition to test, check for String for type, then after check the condition.
+				// Here, if the String is "Moving?", it will check if the event is moving
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "IsSceneOrder?" && st == Scene::SceneType::Order) {
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "IsSceneMenu?" && st == Scene::SceneType::Menu) {
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "IsSceneItem?" && st == Scene::SceneType::Item) {
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "IsSceneEquip?" && st == Scene::SceneType::Equip) {
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "IsSceneStatus?" && st == Scene::SceneType::Status) {
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "AZE" && ev->GetDirection() == 2) { // Condition to test, check for String for type, then after check the condition
+			 // Here, if it's "AZE", it will check if the direction is Down
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+			else if (cmd.string == "else") { // Else option
+				const auto sub_idx = GetSubcommandIndex(cmd.indent);
+
+				frame->current_command = i + 1;
+				ExecuteCommand();
+				break;
+			}
+		}
+	}
+
+	return true;
 }

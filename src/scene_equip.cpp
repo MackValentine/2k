@@ -26,11 +26,15 @@
 #include <lcf/reader_util.h>
 #include "scene_menu.h"
 #include <lcf/rpg/item.h>
+#include <game_map.h>
 
 Scene_Equip::Scene_Equip(Game_Actor& actor, int equip_index) :
 	actor(actor),
 	equip_index(equip_index) {
 	type = Scene::Equip;
+	if (SceneMenu::showMap) {
+		SetUseSharedDrawables(true);
+	}
 }
 
 void Scene_Equip::Start() {
@@ -57,10 +61,40 @@ void Scene_Equip::Start() {
 		item_windows[i]->SetActive(false);
 		item_windows[i]->Refresh();
 	}
+
 	equip_window->SetHelpWindow(help_window.get());
+
+
+	if (SceneMenu::showMap) {
+		spriteset.reset(new Spriteset_Map());
+
+		MapUpdateAsyncContext t;
+		Game_Map::UpdateCommonEvents(t);
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
+	}
+
+	if (SceneMenu::noBackground) {
+		help_window->SetBackOpacity(0);
+		equipstatus_window->SetBackOpacity(0);
+		equip_window->SetBackOpacity(0);
+		for (int i = 0; i < 5; ++i) {
+			item_windows[i]->SetBackOpacity(0);
+		}
+
+		help_window->SetFrameOpacity(0);
+		equipstatus_window->SetFrameOpacity(0);
+		equip_window->SetFrameOpacity(0);
+		for (int i = 0; i < 5; ++i) {
+			item_windows[i]->SetFrameOpacity(0);
+		}
+
+	}
 }
 
 void Scene_Equip::vUpdate() {
+
 	help_window->Update();
 
 	UpdateEquipWindow();
@@ -71,6 +105,18 @@ void Scene_Equip::vUpdate() {
 		UpdateEquipSelection();
 	} else if (item_window->GetActive()) {
 		UpdateItemSelection();
+	}
+
+	if (SceneMenu::showMap) {
+
+		MapUpdateAsyncContext actx;
+		if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+			Game_Map::UpdateCommonEvents(actx);
+			UpdateGraphics();
+		}
+
+		Main_Data::game_screen->Update();
+		Main_Data::game_pictures->Update(false);
 	}
 }
 
@@ -165,6 +211,19 @@ static bool CanRemoveEquipment(const Game_Actor& actor, int index) {
 void Scene_Equip::UpdateEquipSelection() {
 	if (Input::IsTriggered(Input::CANCEL)) {
 		Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cancel));
+
+		if (SceneMenu::showMap) {
+
+			MapUpdateAsyncContext actx;
+			if (!actx.IsActive() || actx.IsParallelCommonEvent()) {
+				Game_Map::UpdateCommonEvents(actx);
+				UpdateGraphics();
+			}
+
+			Main_Data::game_screen->Update();
+			Main_Data::game_pictures->Update(false);
+		}
+
 		Scene::Pop();
 	} else if (Input::IsTriggered(Input::DECISION)) {
 		if (!CanRemoveEquipment(actor, equip_window->GetIndex())) {
@@ -214,4 +273,9 @@ void Scene_Equip::UpdateItemSelection() {
 			item_windows[i]->Refresh();
 		}
 	}
+}
+
+int Scene_Equip::GetItemID(int i) {
+
+	return 0;
 }

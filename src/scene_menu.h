@@ -23,7 +23,31 @@
 #include "window_command.h"
 #include "window_gold.h"
 #include "window_menustatus.h"
+#include "spriteset_map.h"
+#include "game_screen.h"
+#include "game_pictures.h"
 
+namespace SceneMenu {
+
+	const int MaxItems = 12;
+
+	extern std::string menuLabels[MaxItems];
+	extern int menuBehaviour[MaxItems];
+
+	void Reset();
+	void Replace(bool b);
+	extern bool replaceCommands;
+
+	std::vector<lcf::DBString> GetSaveData();
+	void SetSaveData(std::vector<lcf::DBString>);
+	std::vector<std::string> split(const std::string& s, char seperator);
+
+	extern bool showMap;
+	extern bool noBackground;
+
+	extern int sortItemType;
+
+}
 /**
  * Scene Menu class.
  */
@@ -66,10 +90,15 @@ public:
 		Order,
 		Wait,
 		Quit,
+		CommonEvent,
 		// EasyRPG extra
 		Debug = 100,
 		Settings = 101,
 	};
+
+	Window_Selectable* GetWindow(int i);
+
+	int GetItemID();
 
 private:
 	/** Selected index on startup. */
@@ -86,6 +115,15 @@ private:
 
 	/** Options available in the menu. */
 	std::vector<CommandOptionType> command_options;
+
+	std::unique_ptr<Spriteset_Map> spriteset;
 };
+
+inline Window_Selectable* Scene_Menu::GetWindow(int i) {
+	if (i == 1)
+		return menustatus_window.get();
+
+	return command_window.get();
+}
 
 #endif

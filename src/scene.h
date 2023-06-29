@@ -264,6 +264,7 @@ public:
 	virtual void OnEventHpChanged(Game_Battler* battler, int hp);
 	virtual void OnTranslationChanged();
 
+	static int oldInstanceType;
 protected:
 	using AsyncContinuation = std::function<void(void)>;
 	AsyncContinuation async_continuation;

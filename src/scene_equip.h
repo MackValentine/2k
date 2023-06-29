@@ -25,6 +25,7 @@
 #include "window_equip.h"
 #include "window_equipstatus.h"
 #include "window_help.h"
+#include "scene_menu.h"
 
 /**
  * Scene Equip class.
@@ -69,6 +70,9 @@ public:
 	 */
 	void UpdateItemSelection();
 
+
+	Window_Selectable* GetWindow(int i);
+	int GetItemID(int i);
 private:
 	/** Actor in the party whose equipment is displayed. */
 	Game_Actor& actor;
@@ -85,6 +89,34 @@ private:
 	std::unique_ptr<Window_Equip> equip_window;
 	/** Displays description about the selected item. */
 	std::unique_ptr<Window_Help> help_window;
+
+	std::unique_ptr<Spriteset_Map> spriteset;
 };
 
+inline Window_Selectable* Scene_Equip::GetWindow(int i) {
+	if (i == 1)
+		return (Window_Selectable*)help_window.get();
+	if (i == 2)
+		return (Window_Selectable*)equipstatus_window.get();
+	if (i == 3)
+		return (Window_Selectable*)item_window.get();
+
+	if (item_windows.size() > 0) {
+		if (i == -1)
+			return (Window_Selectable*)item_windows[0].get();
+		if (i == -2)
+			return (Window_Selectable*)item_windows[1].get();
+		if (i == -3)
+			return (Window_Selectable*)item_windows[2].get();
+		if (i == -4)
+			return (Window_Selectable*)item_windows[3].get();
+		if (i == -5)
+			return (Window_Selectable*)item_windows[4].get();
+	}
+	else {
+		return nullptr;
+	}
+
+	return equip_window.get();
+}
 #endif

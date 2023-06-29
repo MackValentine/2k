@@ -25,10 +25,11 @@
 #include <lcf/reader_util.h>
 #include "game_battle.h"
 #include "output.h"
+#include "scene_menu.h"
 
 Window_Item::Window_Item(int ix, int iy, int iwidth, int iheight) :
 	Window_Selectable(ix, iy, iwidth, iheight) {
-	column_max = 2;
+	column_max = 1;
 }
 
 const lcf::rpg::Item* Window_Item::GetItem() const {
@@ -59,6 +60,22 @@ bool Window_Item::CheckEnable(int item_id) {
 	return Main_Data::game_party->IsItemUsable(item_id, actor);
 }
 
+bool sortItem(int i1, int i2)
+{
+	const lcf::rpg::Item* item = lcf::ReaderUtil::GetElement(lcf::Data::items, i1);
+	const lcf::rpg::Item* item2 = lcf::ReaderUtil::GetElement(lcf::Data::items, i2);
+
+	Output::Debug("{} {} / {} {}", i1, i2, item->type, item2->type);
+
+	if (item->type == lcf::rpg::Item::Type_weapon && item->type != item2->type) {
+		return item->type > item2->type;
+	}
+	//if (item->type == lcf::rpg::Item::Type_weapon && item->type != item2->type) {
+		//return i1 + 1000 < i2;
+	//}
+	return (i1 < i2);
+}
+
 void Window_Item::Refresh() {
 	std::vector<int> party_items;
 
@@ -67,7 +84,9 @@ void Window_Item::Refresh() {
 
 	for (size_t i = 0; i < party_items.size(); ++i) {
 		if (this->CheckInclude(party_items[i])) {
-			data.push_back(party_items[i]);
+			const lcf::rpg::Item* item = lcf::ReaderUtil::GetElement(lcf::Data::items, party_items[i]);
+			if (SceneMenu::sortItemType == item->type || SceneMenu::sortItemType == -1)
+				data.push_back(party_items[i]);
 		}
 	}
 
@@ -88,7 +107,8 @@ void Window_Item::Refresh() {
 
 	if (CheckInclude(0)) {
 		data.push_back(0);
-	}
+	}// else if (SceneMenu::sortItemType >= 0)
+	//	std::sort(data.begin(), data.end(), *sortItem);
 
 	item_max = data.size();
 

@@ -95,6 +95,7 @@
 // This is not used on Emscripten.
 #include "exe_reader.h"
 #endif
+#include <scene_menu.h>
 
 using namespace std::chrono_literals;
 
@@ -921,6 +922,8 @@ void Player::ResetGameObjects() {
 	Main_Data::game_variables_global = std::make_unique<Game_Variables>(min_var, max_var);
 	Main_Data::game_ineluki = std::make_unique<Game_Ineluki>();
 
+	SceneMenu::Reset();
+
 	DynRpg::Reset();
 
 	Game_Clock::ResetFrame(Game_Clock::now());
@@ -1159,6 +1162,9 @@ void Player::LoadSavegame(const std::string& save_name, int save_id) {
 	Main_Data::game_switches->SetData(std::move(save->system.switches));
 	Main_Data::game_variables->SetLowerLimit(lcf::Data::variables.size());
 	Main_Data::game_variables->SetData(std::move(save->system.variables));
+
+	SceneMenu::SetSaveData(std::move(save->system.maniac_strings));
+
 	Main_Data::game_system->SetupFromSave(std::move(save->system));
 	Main_Data::game_actors->SetSaveData(std::move(save->actors));
 	Main_Data::game_party->SetupFromSave(std::move(save->inventory));

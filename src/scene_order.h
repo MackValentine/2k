@@ -21,6 +21,7 @@
 // Headers
 #include "scene.h"
 #include "window_command.h"
+#include "scene_menu.h"
 
 /**
  * Scene Order class.
@@ -37,6 +38,8 @@ public:
 	void Terminate();
 	void vUpdate() override;
 
+	Window_Command* GetWindow(int i);
+	int GetItemID();
 private:
 	/** Contains new actor order or 0 if actor wasnt rearranged yet. */
 	std::vector<int> actors;
@@ -44,6 +47,7 @@ private:
 	int actor_counter;
 
 	std::unique_ptr<Window_Command>	window_left, window_right, window_confirm;
+	//std::unique_ptr<Window_Command>	window_left, window_right, window_confirm;
 
 	void CreateCommandWindow();
 
@@ -52,6 +56,13 @@ private:
 
 	void Redo();
 	void Confirm();
-};
 
+	std::unique_ptr<Spriteset_Map> spriteset;
+};
+inline Window_Command* Scene_Order::GetWindow(int i) {
+	if (i == 1)
+		return window_right.get();
+
+	return window_left.get();
+}
 #endif
