@@ -286,6 +286,7 @@ protected:
 	bool CommandManiacCallCommand(lcf::rpg::EventCommand const& com);
 	bool CommandCallMovement(lcf::rpg::EventCommand const& com);
 	bool CommandWaitForMovement(lcf::rpg::EventCommand const& com);
+	bool CommandAnimateVariable(lcf::rpg::EventCommand const& com);
 
 	// Custom Commands
 	bool CommandSearchPath(lcf::rpg::EventCommand const& com);
