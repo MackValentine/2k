@@ -1114,6 +1114,21 @@ void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my
 							 dst_rect.width, dst_rect.height);
 }
 
+void Bitmap::ReverseMaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Bitmap const& src, int sx, int sy) {
+	BitmapRef inverted_mask = Bitmap::Create(mask.GetWidth(), mask.GetHeight(), mask.GetTransparent());
+
+	// Create a temporary solid color bitmap as the source for the inversion operation
+	BitmapRef solid_color = Bitmap::Create(mask.GetWidth(), mask.GetHeight(), false);
+	solid_color->Fill(Color(0xFF, 0xFF, 0xFF, 0xFF)); // Fill with opaque white color
+
+	// Invert the mask
+	inverted_mask->BlitFast(0, 0, mask, Rect(0, 0, mask.GetWidth(), mask.GetHeight()), Opacity::Opaque());
+
+	// Perform the reverse masked blit
+	BlitFast(dst_rect.x, dst_rect.y, src, Rect(sx, sy, dst_rect.width, dst_rect.height), Opacity::Opaque());
+	Blit(dst_rect.x, dst_rect.y, *inverted_mask, Rect(mx, my, dst_rect.width, dst_rect.height), Opacity::Opaque(), BlendMode::XOR);
+}
+
 void Bitmap::Blit2x(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect) {
 	Transform xform = Transform::Scale(0.5, 0.5);
 

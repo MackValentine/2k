@@ -716,6 +716,8 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandStoreEventID(com);
 		case Cmd::EraseScreen:
 			return CommandEraseScreen(com);
+		case static_cast <Game_Interpreter::Cmd>(2002):
+			CommandMaskPicture(com);
 		case Cmd::ShowScreen:
 			return CommandShowScreen(com);
 		case Cmd::TintScreen:
@@ -3121,6 +3123,68 @@ bool Game_Interpreter::CommandErasePicture(lcf::rpg::EventCommand const& com) { 
 
 	return true;
 }
+
+bool Game_Interpreter::CommandMaskPicture(lcf::rpg::EventCommand const& com) {
+	int pic_idA = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int pic_idB = ValueOrVariable(com.parameters[2], com.parameters[3]);
+	int pic_idC = ValueOrVariable(com.parameters[4], com.parameters[5]); //output
+
+	int maskType = ValueOrVariable(com.parameters[6], com.parameters[7]);
+
+	if (pic_idA <= 0 || pic_idB <= 0 || pic_idC <= 0) {
+		Output::Warning("MaskPicture: Requested invalid picture id (A={}, B={},C={})", pic_idA, pic_idB, pic_idC);
+		return true;
+	}
+
+	struct BlitParameters {
+		Rect const& dst_rect;
+		Bitmap const& mask;
+		int mx;
+		int my;
+		Bitmap const& src;
+		int sx;
+		int sy;
+	};
+
+	std::vector<BlitParameters> paramsArray;
+
+	auto& picA = Main_Data::game_pictures->GetPicture(pic_idA);
+	auto& picB = Main_Data::game_pictures->GetPicture(pic_idB);
+	auto& params = picA.GetShowParams();
+
+	const auto& bitmapA = picA.sprite->GetBitmap();
+	const auto& bitmapB = picB.sprite->GetBitmap();
+
+	BitmapRef bitmapC = Bitmap::Create(bitmapA->width(), bitmapA->height(), bitmapA->GetTransparent());
+
+	paramsArray.push_back({
+		bitmapC.get()->GetRect(), // destination Rect
+		*bitmapA, // mask
+		0, 0,  // maskX and maskY
+		*bitmapB, // source
+		picB.GetShowParams().position_x * -1, picB.GetShowParams().position_y * -1 // sourceX and sourceY
+		});
+
+	for (const auto& param : paramsArray) 
+		if (maskType == 0) 
+			bitmapC->MaskedBlit(param.dst_rect,param.mask,param.mx,param.my,param.src,param.sx,param.sy);
+		else 
+			bitmapC->ReverseMaskedBlit(param.dst_rect,param.mask,param.mx,param.my,param.src,param.sx,param.sy);
+
+	if (Main_Data::game_pictures->Show(pic_idC, params)) {
+		if (params.origin > 0) {
+			auto& pic = Main_Data::game_pictures->GetPicture(pic_idC);
+			if (pic.IsRequestPending()) {
+				pic.MakeRequestImportant();
+				_async_op = AsyncOp::MakeYield();
+			}
+		}
+	}
+	auto& picC = Main_Data::game_pictures->GetPicture(pic_idC);
+	picC.sprite->SetBitmap(bitmapC);
+	return true;
+}
+
 
 bool Game_Interpreter::CommandPlayerVisibility(lcf::rpg::EventCommand const& com) { // code 11310
 	bool hidden = (com.parameters[0] == 0);

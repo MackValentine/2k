@@ -518,6 +518,8 @@ public:
 	 */
 	void MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Bitmap const& src, int sx, int sy);
 
+	void ReverseMaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Bitmap const& src, int sx, int sy);
+
 	/**
 	 * Blits constant color to this one through a mask bitmap.
 	 *
