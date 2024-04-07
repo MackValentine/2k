@@ -51,6 +51,14 @@ void Sprite_Battler::ResetZ() {
 	z += id_limit - battle_index;
 	z += Priority_Battler;
 
+	if (battler->GetType() == Game_Battler::Type_Enemy && battler->GetBattleAnimationId() > 0) {
+		z = battler->GetType();
+		z += y;
+		z *= id_limit / 100;
+		z += id_limit - battle_index * 5;
+		z += Priority_Battler;
+	}
+
 	SetZ(z);
 }
 

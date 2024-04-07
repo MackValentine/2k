@@ -216,6 +216,9 @@ bool Game_Interpreter_Battle::ExecuteCommand(lcf::rpg::EventCommand const& com) 
 			return CommandManiacChangeBattleCommandEx(com);
 		case Cmd::Maniac_GetBattleInfo:
 			return CommandManiacGetBattleInfo(com);
+		// Should be changed
+		case 9999:
+			return CommandSetEnemyWeapon(com);
 		default:
 			return Game_Interpreter::ExecuteCommand(com);
 	}
@@ -623,3 +626,19 @@ bool Game_Interpreter_Battle::CommandManiacGetBattleInfo(lcf::rpg::EventCommand 
 	return true;
 }
 
+bool Game_Interpreter_Battle::CommandSetEnemyWeapon(lcf::rpg::EventCommand const& com) {
+	int enemyID = -1;
+	if (com.parameters.size()>0)
+		enemyID = com.parameters[0];
+	int weaponID = 0;
+	if (com.parameters.size() > 1)
+		weaponID = com.parameters[1];
+
+	if (enemyID >= 0) {
+		std::vector<Game_Battler*> v;
+		Main_Data::game_enemyparty->GetBattlers(v);
+		Game_Enemy* enemy = static_cast<Game_Enemy*>(v[enemyID]);
+		enemy->SetWeapon(weaponID);
+	}
+	return true;
+}

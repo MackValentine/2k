@@ -124,6 +124,10 @@ void Scene_Battle_Rpg2k3::InitEnemies() {
 				break;
 		}
 
+		if (enemy.GetBattleAnimationId() > 0) {
+			static_cast<Sprite_Actor*>(enemy.GetBattleSprite())->Update();
+		}
+
 		visible_idx += !enemy.IsHidden();
 	}
 }
@@ -360,7 +364,13 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 
 void Scene_Battle_Rpg2k3::CreateEnemySprites() {
 	for (auto* enemy: Main_Data::game_enemyparty->GetEnemies()) {
-		enemy->SetBattleSprite(std::make_unique<Sprite_Enemy>(enemy));
+
+		if (enemy->GetBattleAnimationId() > 0) {
+			enemy->SetBattleSprite(std::make_unique<Sprite_Actor>(enemy));
+			enemy->SetWeaponSprite(std::make_unique<Sprite_Weapon>(enemy));
+		}
+		else
+			enemy->SetBattleSprite(std::make_unique<Sprite_Enemy>(enemy));
 	}
 }
 
@@ -376,6 +386,11 @@ void Scene_Battle_Rpg2k3::ResetAllBattlerZ() {
 		auto* sprite = enemy->GetBattleSprite();
 		if (sprite) {
 			sprite->ResetZ();
+			if (enemy->GetBattleAnimationId() > 0) {
+				auto* spriteA = static_cast<Sprite_Actor*>(enemy->GetBattleSprite());
+				spriteA->UpdatePosition();
+				spriteA->DetectStateChange();
+			}
 		}
 	}
 
@@ -1754,6 +1769,18 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionVi
 			}
 		}
 
+		for (auto* enemy : Main_Data::game_enemyparty->GetEnemies()) {
+			auto* sprite = enemy->GetBattleSprite();
+			if (enemy->Exists() && sprite) {
+				//sprite->SetNormalAttacking(false);
+				sprite->ResetFixedFacingDirection();
+				auto* weapon = enemy->GetWeaponSprite();
+				if (weapon) {
+					weapon->StopAttack();
+				}
+			}
+		}
+
 		if (cba_action != nullptr && cba_direction_back) {
 			CBAInit();
 			SetSceneActionSubState(eCBAMove);
@@ -2011,7 +2038,7 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		return BattleActionReturn::eWait;
 	}
 
-	if (source->GetType() == Game_Battler::Type_Ally) {
+	if (source->GetType() == Game_Battler::Type_Ally || (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0 )) {
 		auto* sprite = static_cast<Game_Actor*>(source)->GetActorBattleSprite();
 		if (sprite && !sprite->IsIdling()) {
 			switch (battle_action_state) {
@@ -2204,6 +2231,12 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 				sprite->DetectStateChange();
 			}
 		}
+		else if (b->GetBattleAnimationId() > 0) {
+			Sprite_Actor* sprite = static_cast<Sprite_Actor*>(b->GetBattleSprite());
+			if (sprite) {
+				sprite->DetectStateChange();
+			}
+		}
 	}
 
 	status_window->Refresh();
@@ -2273,7 +2306,7 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		FaceTarget(*actor, *action->GetTarget());
 	}
 
-	if (action->GetCurrentRepeat() == 0 && action->GetCBAMovement() != lcf::rpg::BattlerAnimationItemSkill::Movement_none && source->GetType() == Game_Battler::Type_Ally) {
+	if (action->GetCurrentRepeat() == 0 && action->GetCBAMovement() != lcf::rpg::BattlerAnimationItemSkill::Movement_none && (source->GetType() == Game_Battler::Type_Ally || source->GetBattleAnimationId() > 0)) {
 		cba_action = action;
 		cba_direction_back = false;
 		SetBattleActionState(BattleActionState_CBAInit);
@@ -2307,9 +2340,18 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 	auto* source = action->GetSource();
 	bool ranged_weapon = false;
 
-	if (source->GetType() == Game_Battler::Type_Ally) {
-		auto* actor = static_cast<Game_Actor*>(source);
-		auto* sprite = actor->GetActorBattleSprite();
+	if (source->GetType() == Game_Battler::Type_Ally || (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0)) {
+		Game_Battler* actor;
+		Sprite_Actor* sprite;
+
+		if (source->GetBattleAnimationId() > 0) {
+			actor = static_cast<Game_Enemy*>(source);
+			sprite = static_cast<Sprite_Actor*> (actor->GetBattleSprite());
+		}
+		else {
+			actor = static_cast<Game_Actor*>(source);
+			sprite = static_cast<Game_Actor*>(actor)->GetActorBattleSprite();
+		}
 		if (sprite) {
 			const auto pose = AdjustPoseForDirection(action->GetSource(), action->GetSourcePose());
 			if (pose != lcf::rpg::BattlerAnimation::Pose_Idle) {
@@ -2365,7 +2407,7 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 	cba_ranged_weapon_move_frame = 0;
 	cba_ranged.clear();
 
-	if (source->GetType() == Game_Battler::Type_Ally) {
+	if (source->GetType() == Game_Battler::Type_Ally || (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0)) {
 		auto* actor = static_cast<Game_Actor*>(source);
 
 		if (action->GetType() == Game_BattleAlgorithm::Type::Normal) {
@@ -2499,6 +2541,12 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		if (sprite) {
 			sprite->SetAnimationLoop(Sprite_Actor::LoopState_DefaultAnimationAfterFinish);
 		}
+		else if (source->GetBattleAnimationId() > 0) {
+			Sprite_Actor* sprite = static_cast<Sprite_Actor*>(source->GetBattleSprite());
+			if (sprite) {
+				sprite->SetAnimationLoop(Sprite_Actor::LoopState_DefaultAnimationAfterFinish);
+			}
+		}
 	}
 
 	SetBattleActionState(BattleActionState_Execute);
@@ -2518,6 +2566,12 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 	auto* source = action->GetSource();
 	if (source->GetType() == Game_Battler::Type_Ally) {
 		auto* sprite = static_cast<Game_Actor*>(source)->GetActorBattleSprite();
+		if (sprite) {
+			sprite->SetAnimationLoop(Sprite_Actor::LoopState_DefaultAnimationAfterFinish);
+		}
+	}
+	else if (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0) {
+		Sprite_Actor* sprite = static_cast<Sprite_Actor*>(source->GetBattleSprite());
 		if (sprite) {
 			sprite->SetAnimationLoop(Sprite_Actor::LoopState_DefaultAnimationAfterFinish);
 		}
@@ -2553,6 +2607,9 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 	if (target->GetType() == Game_Battler::Type_Ally) {
 		target_sprite = static_cast<Game_Actor*>(target)->GetActorBattleSprite();
 	}
+	else if (target->GetBattleAnimationId() > 0) {
+		target_sprite = static_cast<Sprite_Actor*>(target->GetBattleSprite());
+	}
 
 	const bool was_dead = target->IsDead();
 
@@ -2581,7 +2638,7 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 	action->ApplyAttributeShiftEffects();
 
 	if (action->IsSuccess() && action->IsAffectHp() && action->GetAffectedHp() <= 0) {
-		if (target->GetType() == Game_Battler::Type_Enemy) {
+		if (target->GetType() == Game_Battler::Type_Enemy && target->GetBattleAnimationId() == 0) {
 			auto* enemy = static_cast<Game_Enemy*>(target);
 			enemy->SetBlinkTimer();
 		} else if (action->GetAffectedHp() < 0) {
@@ -2591,8 +2648,11 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		}
 	}
 
-	if (!was_dead && target->GetType() == Game_Battler::Type_Ally && target->IsDead()) {
-		target_sprite->SetAnimationState(Sprite_Actor::AnimationState_Dead, Sprite_Actor::LoopState_WaitAfterFinish);
+	if (!was_dead && target->IsDead()) {
+		if (target->GetType() == Game_Battler::Type_Ally)
+			target_sprite->SetAnimationState(Sprite_Actor::AnimationState_Dead, Sprite_Actor::LoopState_WaitAfterFinish);
+		else if (target->GetBattleAnimationId() > 0)
+			target_sprite->SetAnimationState(Sprite_Actor::AnimationState_Dead, Sprite_Actor::LoopState_WaitAfterFinish);
 	}
 
 	if (action->IsSuccess() && target->GetType() == Game_Battler::Type_Enemy) {
@@ -2664,7 +2724,7 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		return BattleActionReturn::eContinue;
 	}
 
-	if (source->GetType() == Game_Battler::Type_Ally) {
+	if (source->GetType() == Game_Battler::Type_Ally ||(source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0)) {
 		if (action->GetType() == Game_BattleAlgorithm::Type::Normal) {
 			auto* actor = static_cast<Game_Actor*>(source);
 			auto* source_sprite = actor->GetActorBattleSprite();
@@ -2973,6 +3033,12 @@ void Scene_Battle_Rpg2k3::CBAMove() {
 
 		if (source->GetType() == Game_Battler::Type_Ally) {
 			auto* sprite = static_cast<Game_Actor*>(source)->GetActorBattleSprite();
+			if (sprite) {
+				sprite->ResetZ();
+			}
+		}
+		else if (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0) {
+			auto* sprite = source->GetBattleSprite();
 			if (sprite) {
 				sprite->ResetZ();
 			}

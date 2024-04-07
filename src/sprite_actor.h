@@ -59,7 +59,7 @@ public:
 	 *
 	 * @param actor game battler to display
 	 */
-	Sprite_Actor(Game_Actor* actor);
+	Sprite_Actor(Game_Battler* actor);
 
 	~Sprite_Actor() override;
 
@@ -91,7 +91,7 @@ public:
 
 	void Draw(Bitmap& dst) override;
 
-	Game_Actor* GetBattler() const;
+	Game_Battler* GetBattler() const;
 
 	void UpdatePosition();
 

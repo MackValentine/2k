@@ -27,7 +27,7 @@
 #include <lcf/reader_util.h>
 #include "output.h"
 
-Sprite_Weapon::Sprite_Weapon(Game_Actor* actor) : Sprite() {
+Sprite_Weapon::Sprite_Weapon(Game_Battler* actor) : Sprite() {
 	battler = actor;
 	CreateSprite();
 }
@@ -64,7 +64,10 @@ void Sprite_Weapon::Update() {
 
 	SetSrcRect(Rect(frame * 64, battler_animation_weapon->weapon_index * 64, 64, 64));
 
-	SetFlipX(battler->IsDirectionFlipped());
+	bool b = battler->IsDirectionFlipped();
+	if (battler->GetType() == Game_Battler::Type_Enemy && battler->GetBattleAnimationId() > 0)
+		b = !b;
+	SetFlipX(b);
 }
 
 void Sprite_Weapon::SetWeaponAnimation(int nweapon_animation_id) {

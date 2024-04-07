@@ -80,6 +80,8 @@ private:
 	bool CommandManiacChangeBattleCommandEx(lcf::rpg::EventCommand const& com);
 	bool CommandManiacGetBattleInfo(lcf::rpg::EventCommand const& com);
 
+	bool CommandSetEnemyWeapon(lcf::rpg::EventCommand const& com);
+
 private:
 	Span<const lcf::rpg::TroopPage> pages;
 	std::vector<bool> executed;

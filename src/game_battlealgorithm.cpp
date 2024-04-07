@@ -614,7 +614,18 @@ int Game_BattleAlgorithm::Normal::GetAnimationId(int idx) const {
 			&& Feature::HasRpg2k3BattleSystem()
 			&& !lcf::Data::animations.empty()) {
 		Game_Enemy* enemy = static_cast<Game_Enemy*>(source);
-		return enemy->GetUnarmedBattleAnimationId();
+		if (source->GetBattleAnimationId() > 0) {
+			auto weapons = enemy->GetWeaponID();
+			auto* item = lcf::ReaderUtil::GetElement(lcf::Data::items, weapons);
+			if (item) {
+				return item->animation_id;
+			}
+			else if (idx == 0) {
+				return enemy->GetUnarmedBattleAnimationId();
+			}
+			return 0;
+		} else
+			return enemy->GetUnarmedBattleAnimationId();
 	}
 	return 0;
 }
@@ -803,6 +814,18 @@ const lcf::rpg::BattlerAnimationItemSkill* Game_BattleAlgorithm::Normal::GetWeap
 		if (item) {
 			if (static_cast<int>(item->animation_data.size()) > source->GetId() - 1) {
 				return &item->animation_data[source->GetId() - 1];
+			}
+		}
+	} else if (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0) {
+		auto* enemy = static_cast<Game_Enemy*>(source);
+		auto* item = lcf::ReaderUtil::GetElement(lcf::Data::items, enemy->GetWeaponID());
+		if (item) {
+			int i = enemy->GetBattleAnimationId() - 1;
+			if (enemy->GetAnimationActorID() > 0)
+				i = enemy->GetAnimationActorID() - 1;
+			
+			if (static_cast<int>(item->animation_data.size()) > i) {
+				return &item->animation_data[i];
 			}
 		}
 	}
@@ -1158,6 +1181,18 @@ int Game_BattleAlgorithm::Skill::GetSourcePose() const {
 			return skill.battler_animation_data[source->GetId() - 1].pose;
 		}
 	}
+
+	if (source->GetType() == Game_Battler::Type_Enemy && source->GetBattleAnimationId() > 0) {
+		Game_Enemy* enemy = static_cast<Game_Enemy*>(source);
+		int i = enemy->GetBattleAnimationId();
+		if (enemy->GetAnimationActorID() > 0)
+			i = enemy->GetAnimationActorID();
+		if (static_cast<int>(skill.battler_animation_data.size()) > i - 1) {
+			return skill.battler_animation_data[i - 1].pose;
+		}
+	}
+
+	Output::Debug("QSF");
 
 	return lcf::rpg::BattlerAnimation::Pose_Skill;
 }

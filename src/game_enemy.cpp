@@ -136,6 +136,44 @@ void Game_Enemy::Transform(int new_enemy_id) {
 		enemy = &dummy;
 	}
 
+	// All this part will have to be changed when the Editor will be done.
+
+	// _animated refers to Animations 2
+	int id = 0;
+	std::string s = GetSpriteName().data();
+	int size = s.find("_animated=");
+
+	if (size != std::string::npos) {
+		size += 10;
+		std::string s_id = s.substr(size, s.size() - size);
+		if (!s_id.empty())
+			if (strspn(s_id.c_str(), "0123456789") == s_id.size()) {
+				battleAnimationID = std::stoi(s_id);
+				SetBattleSprite(std::make_unique<Sprite_Enemy>(this));
+				offset_sprite_h = 48 - GetBattleSprite()->GetHeight();
+			}
+	}
+
+	// _animated_actor refers to Actor's animations
+	s = GetSpriteName().data();
+	size = s.find("_animated_actor=");
+
+	if (size != std::string::npos) {
+		size += 16;
+		std::string s_id = s.substr(size, s.size() - size);
+		if (!s_id.empty())
+			if (strspn(s_id.c_str(), "0123456789") == s_id.size()) {
+				int i_id = std::stoi(s_id);
+
+				animationActorID = i_id;
+				auto dbActor = lcf::ReaderUtil::GetElement(lcf::Data::actors, i_id);
+
+				battleAnimationID = dbActor->battler_animation;
+				SetBattleSprite(std::make_unique<Sprite_Enemy>(this));
+				offset_sprite_h = 48 - GetBattleSprite()->GetHeight();
+			}
+	}
+
 	auto* sprite = GetEnemyBattleSprite();
 	if (sprite) {
 		sprite->Refresh();
@@ -186,6 +224,17 @@ void Game_Enemy::UpdateBattle() {
 	if (death_timer > 0) --death_timer;
 	if (explode_timer > 0) --explode_timer;
 
+	if (GetBattleAnimationId() > 0) {
+		auto* sprite = static_cast<Sprite_Actor*>(Game_Battler::GetBattleSprite());
+		if (sprite) {
+			sprite->Update();
+			auto* weapon = Game_Battler::GetWeaponSprite();
+			if (weapon) {
+				weapon->Update();
+			}
+		}
+	}
+
 	Game_Battler::UpdateBattle();
 }
 
@@ -195,4 +244,21 @@ void Game_Enemy::ResetBattle() {
 	blink_timer = 0;
 	death_timer = 0;
 	explode_timer = 0;
+}
+
+int Game_Enemy::GetOffsetSpriteAnimated() {
+	return offset_sprite_h;
+}
+
+int Game_Enemy::GetWeaponID() {
+	return weaponID;
+}
+
+int Game_Enemy::GetAnimationActorID() {
+	return animationActorID;
+}
+
+void Game_Enemy::SetWeapon(int id)
+{
+	weaponID = id;
 }
