@@ -91,6 +91,10 @@ public:
 	 */
 	void ReplaceCommands(std::vector<std::string> commands);
 
+
+	void SetColumn(int i);
+
+	int col_max = 1;
 protected:
 	std::vector<std::string> commands;
 	std::vector<bool> commands_enabled;

@@ -302,6 +302,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/scene_map.h
 	src/scene_menu.cpp
 	src/scene_menu.h
+	src/scene_menu_custom.cpp
+	src/scene_menu_custom.h
 	src/scene_name.cpp
 	src/scene_name.h
 	src/scene_order.cpp
@@ -392,8 +394,12 @@ add_library(${PROJECT_NAME} OBJECT
 	src/window_battlestatus.h
 	src/window_command.cpp
 	src/window_command.h
+	src/window_command_custom.cpp
+	src/window_command_custom.h
 	src/window_command_horizontal.cpp
 	src/window_command_horizontal.h
+	src/window_custom.cpp
+	src/window_custom.h
 	src/window.cpp
 	src/window_equip.cpp
 	src/window_equip.h
@@ -420,6 +426,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/window_keyboard.h
 	src/window_menustatus.cpp
 	src/window_menustatus.h
+	src/window_menustatus_custom.cpp
+	src/window_menustatus_custom.h
 	src/window_message.cpp
 	src/window_message.h
 	src/window_name.cpp

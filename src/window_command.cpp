@@ -91,3 +91,6 @@ void Window_Command::ReplaceCommands(std::vector<std::string> in_commands) {
 
 	Refresh();
 }
+void Window_Command::SetColumn(int ncolmax) {
+	col_max = ncolmax;
+}

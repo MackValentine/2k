@@ -5105,3 +5105,67 @@ int Game_Interpreter::ManiacBitmask(int value, int mask) const {
 
 	return value;
 }
+
+void Game_Interpreter::tokenize(std::string const& str, const char delim,
+	std::vector<std::string>& out)
+{
+	size_t start;
+	size_t end = 0;
+
+	while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+	{
+		end = str.find(delim, start);
+		out.push_back(str.substr(start, end - start));
+	}
+}
+
+void Game_Interpreter::tokenizeRegex(std::string const& str, const char delim, std::vector<std::string>& out) {
+	// Chaîne de caractères donnée
+	std::string chaine = str;
+
+	// Expression régulière pour trouver les parties entre "'", incluant les virgules
+	std::regex pattern("'[^']*'");
+
+	// Iterator pour parcourir les correspondances
+	std::sregex_iterator it(chaine.begin(), chaine.end(), pattern);
+	std::sregex_iterator end;
+
+	// Vecteur pour stocker les parties entre "'"
+	std::vector<std::string> parties_entre_quotes;
+
+	while (it != end) {
+		parties_entre_quotes.push_back(it->str());
+		++it;
+	}
+
+	// Remplacement des parties entre "'" par un marqueur temporaire
+	std::string marqueur = "__MARQUEUR_TEMPORAIRE__";
+	std::string chaine_temporaire = std::regex_replace(chaine, pattern, marqueur);
+
+	// Flux de chaînes de caractères pour découper la chaîne par ","
+	std::istringstream iss(chaine_temporaire);
+	std::vector<std::string> parties;
+	std::string partie;
+
+	while (std::getline(iss, partie, delim)) {
+		parties.push_back(partie);
+		//Output::Debug("S : {}", partie);
+	}
+
+	// Restaurer les parties entre "'" en remplaçant le marqueur temporaire
+	for (std::string& partie : parties) {
+		if (parties_entre_quotes.empty()) break;
+		size_t pos = partie.find(marqueur);
+		if (pos != std::string::npos) {
+			partie.replace(pos, marqueur.length(), parties_entre_quotes.front());
+			//Output::Debug("SA : {}", partie);
+			parties_entre_quotes.erase(parties_entre_quotes.begin());
+		}
+	}
+
+	// Affichage du résultat final
+	//for (const std::string& partie : parties) {
+	//	std::cout << partie << std::endl;
+	//}
+	out = parties;
+}
