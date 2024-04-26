@@ -65,17 +65,28 @@ Scene_Menu_Custom::Scene_Menu_Custom(int menu_index) :
 void Scene_Menu_Custom::Start() {
 	CreateCommandWindow();
 
+	BitmapRef system2 = Cache::System2();
+	if (!system2) {
+		if (!Cache::System2() && Main_Data::game_system->HasSystem2Graphic()) {
+			FileRequestAsync* request = AsyncHandler::RequestFile("System2", Main_Data::game_system->GetSystem2Name());
+			request->SetGraphicFile(true);
+			request_id = request->Bind(&Scene_Menu_Custom::OnSystem2Ready, this);
+			request->Start();
+		} 
+	}
+
+
 	// Gold Window
 	gold_window.reset(new Window_Gold(Player::menu_offset_x, (Player::screen_height - gold_window_height - Player::menu_offset_y), gold_window_width, gold_window_height));
 
-	// Status Window
-	menustatus_window.reset(new Window_MenuStatus_Custom(Player::menu_offset_x + menu_command_width, Player::menu_offset_y, (MENU_WIDTH - menu_command_width), MENU_HEIGHT));
-	menustatus_window->SetActive(false);
+
 
 	std::string win_name = "Gold";
 	auto it2 = CustomMenu::customWindows.find(win_name);
 
 	if (it2 != CustomMenu::customWindows.end()) {
+
+		Output::Debug("QAZZ");
 		gold_window->SetX(CustomMenu::customWindows[win_name].x);
 		gold_window->SetY(CustomMenu::customWindows[win_name].y);
 		gold_window->SetWidth(CustomMenu::customWindows[win_name].w);
@@ -87,19 +98,39 @@ void Scene_Menu_Custom::Start() {
 	}
 
 	win_name = "Status";
-	it2 = CustomMenu::customWindows.find(win_name);
+	auto it3 = CustomMenu::customWindows.find(win_name);
 
-	if (it2 != CustomMenu::customWindows.end()) {
+	if (it3 != CustomMenu::customWindows.end()) {
+
+		Output::Debug("AZE");
+
+		// Status Window
+		int h = CustomMenu::customWindows[win_name].itemHeight * (Main_Data::game_party->GetBattlerCount() + 1) / CustomMenu::customWindows[win_name].column;
+		menustatus_window.reset(new Window_MenuStatus_Custom(Player::menu_offset_x + menu_command_width, Player::menu_offset_y, CustomMenu::customWindows[win_name].w, h));
+		menustatus_window->SetActive(false);
 
 		menustatus_window->SetX(CustomMenu::customWindows[win_name].x);
 		menustatus_window->SetY(CustomMenu::customWindows[win_name].y);
 		menustatus_window->SetWidth(CustomMenu::customWindows[win_name].w);
 		menustatus_window->SetHeight(CustomMenu::customWindows[win_name].h);
 
+		menustatus_window->SetMenuItemHeight(CustomMenu::customWindows[win_name].itemHeight);
+
 		menustatus_window->SetOpacity(CustomMenu::customWindows[win_name].opacity);
 		menustatus_window->SetBackOpacity(CustomMenu::customWindows[win_name].opacity);
 
+		menustatus_window->SetColumnMax(CustomMenu::customWindows[win_name].column);
+
 		menustatus_window->SetVisible(!CustomMenu::customWindows[win_name].hide);
+
+		menustatus_window->Refresh();
+	}
+	else {
+		// Status Window
+		menustatus_window.reset(new Window_MenuStatus_Custom(Player::menu_offset_x + menu_command_width, Player::menu_offset_y, (MENU_WIDTH - menu_command_width), MENU_HEIGHT));
+		menustatus_window->SetMenuItemHeight(58);
+		menustatus_window->SetActive(false);
+		menustatus_window->Refresh();
 	}
 
 	CreateCustomWindows();
@@ -127,6 +158,13 @@ void Scene_Menu_Custom::CreateTitleGraphic() {
 		backSprite.reset(new Plane());
 		backSprite->SetBitmap(Bitmap::Create(Player::screen_width, Player::screen_height, Color(0, 0, 0, 255)));
 	}
+}
+
+
+void Scene_Menu_Custom::OnSystem2Ready(FileRequestResult* result) {
+	Cache::SetSystem2Name(result->file);
+
+	//SetupSystem2Graphics();
 }
 
 void Scene_Menu_Custom::OnTitleSpriteReady(FileRequestResult* result) {

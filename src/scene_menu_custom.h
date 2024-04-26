@@ -37,6 +37,15 @@ public:
 	std::string text;
 };
 
+struct MenuCustomStatus {
+public:
+	int x;
+	int y;
+	bool unique;
+	std::string text;
+	int align;
+};
+
 struct MenuCustomWindow {
 public:
 	int x;
@@ -44,10 +53,14 @@ public:
 	int w;
 	int h;
 	bool hide;
-	int column;
+	int column = 1;
 	int opacity;
 	std::string name;
 	std::vector<MenuCustomWindowPage> pages;
+
+	std::vector<MenuCustomStatus> stats;
+
+	int itemHeight = 58;
 };
 
 namespace CustomMenu {
@@ -144,6 +157,8 @@ private:
 
 
 	FileRequestBinding request_id;
+
+	void OnSystem2Ready(FileRequestResult* result);
 };
 
 #endif

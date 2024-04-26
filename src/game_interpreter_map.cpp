@@ -756,54 +756,114 @@ bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& co
 			if (params.size() > 7) {
 				// Todo rework all this part to include Pages
 				//s = params[6];
-				for (int i = 7;i<params.size(); i++) {
 
-					Output::Debug("Page {}", params[i]);
+				if (name != "Commands" && name != "Gold" && name != "Status") {
+					for (int i = 7; i < params.size(); i++) {
 
-					std::regex pattern("\\{([^{}]*)\\}");
+						// Output::Debug("Page {}", params[i]);
 
-					// Iterator pour parcourir les correspondances
-					std::sregex_iterator it(params[i].begin(), params[i].end(), pattern);
-					std::sregex_iterator end;
+						std::regex pattern("\\{([^{}]*)\\}");
 
-					int condition;
-					s = it->str(1);
-					condition = atoi(s.c_str());
-					Output::Debug("Cond {}", condition);
+						// Iterator pour parcourir les correspondances
+						std::sregex_iterator it(params[i].begin(), params[i].end(), pattern);
+						std::sregex_iterator end;
 
-					int align = 0;
-					it++;
-					s = it->str(1);
-					transform(s.begin(), s.end(), s.begin(), ::tolower);
-					if (s == "middle")
-						align = 1;
-					else if(s == "right")
-						align = 2;
-					Output::Debug("Align {}", align);
+						int condition;
+						s = it->str(1);
+						condition = atoi(s.c_str());
+						// Output::Debug("Cond {}", condition);
 
-					std::string text;
-					it++;
-					s = it->str(1);
-					s.replace(0, 1, "");
-					s.replace(s.end() - 1, s.end(), "");
-					text = s;
-					Output::Debug("Text {}", text);
+						int align = 0;
+						it++;
+						s = it->str(1);
+						transform(s.begin(), s.end(), s.begin(), ::tolower);
+						if (s == "middle")
+							align = 1;
+						else if (s == "right")
+							align = 2;
+						// Output::Debug("Align {}", align);
+
+						std::string text;
+						it++;
+						s = it->str(1);
+						s.replace(0, 1, "");
+						s.replace(s.end() - 1, s.end(), "");
+						text = s;
+						// Output::Debug("Text {}", text);
 
 
-					MenuCustomWindowPage p;
-					p.align = align;
-					p.condition = condition;
-					p.text = text;
+						MenuCustomWindowPage p;
+						p.align = align;
+						p.condition = condition;
+						p.text = text;
 
-					w.pages.push_back(p);
-					w.name = name;
+						w.pages.push_back(p);
 
+					}
+				}
+				else if (name == "Status") {
+					Output::Debug("Window Status");
+
+					w.itemHeight = atoi(params[7].c_str());
+
+					if (params.size() > 8) {
+						for (int i = 8; i < params.size(); i++) {
+
+							std::regex pattern("\\{([^{}]*)\\}");
+
+							// Iterator pour parcourir les correspondances
+							std::sregex_iterator it(params[i].begin(), params[i].end(), pattern);
+							std::sregex_iterator end;
+
+							s = it->str(1);
+							delim = ';';
+							std::vector<std::string> strPos;
+							tokenize(s, delim, strPos);
+
+							int x = atoi(strPos[0].c_str());
+							int y = atoi(strPos[1].c_str());
+
+							int align = 0;
+							if (strPos.size() > 2) {
+								s = strPos[2];
+								transform(s.begin(), s.end(), s.begin(), ::tolower);
+								if (s == "middle")
+									align = 1;
+								else if (s == "right")
+									align = 2;
+							}
+
+							std::string unique = "";
+							if (strPos.size() > 3) {
+								unique = strPos[3].c_str();
+							}
+							transform(unique.begin(), unique.end(), unique.begin(), ::tolower);
+							bool b = unique == "true";
+
+							std::string text = "";
+							it++;
+							s = it->str(1);
+							s.replace(0, 1, "");
+							s.replace(s.end() - 1, s.end(), "");
+							text = s;
+
+							MenuCustomStatus stats;
+							stats.x = x;
+							stats.y = y;
+							stats.text = text;
+							stats.unique = b;
+							stats.align = align;
+
+							w.stats.push_back(stats);
+						}
+					}
 				}
 
 			}
 
 			 // Output::Debug("{} {} {} {} {} {}", w.x, w.y, w.w, w.h, w.hide, w.column);
 
+			w.name = name;
 			CustomMenu::customWindows[name] = w;
 
 		}

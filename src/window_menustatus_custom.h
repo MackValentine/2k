@@ -19,18 +19,25 @@
 #define EP_WINDOW_MENUSTATUS_CUSTOM_H
 
 // Headers
-#include "window_selectable.h"
+#include "window_menustatus.h"
+#include <regex>
+#include "output.h"
 
 /**
  * Window MenuStatus Class
  */
-class Window_MenuStatus_Custom : public Window_Selectable {
+class Window_MenuStatus_Custom : public Window_MenuStatus {
 public:
 	Window_MenuStatus_Custom(int ix, int iy, int iwidth, int iheight);
 	void Refresh();
 	void UpdateCursorRect() override;
 
+	std::string ParserText(std::string text, int index, int tx, int ty, Text::Alignment align);
+	std::string replaceFunction(const std::smatch& match, int index, int tx, int ty, Text::Alignment align);
+
 	Game_Actor* GetActor() const;
+
+	bool customised = false;
 
 protected:
 	int text_offset = 0;
