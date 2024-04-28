@@ -802,7 +802,8 @@ bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& co
 					}
 				}
 				else if (name == "Status") {
-					Output::Debug("Window Status");
+
+					// Output::Debug("Window Status");
 
 					w.itemHeight = atoi(params[7].c_str());
 

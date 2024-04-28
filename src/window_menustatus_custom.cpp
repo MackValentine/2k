@@ -116,7 +116,7 @@ void Window_MenuStatus_Custom::Refresh() {
 						int tx = stat.x + (i % column_max) * (GetWidth() - 24) / column_max;
 						int ty = stat.y + (i / column_max - GetTopRow()) * (menu_item_height)+2 + y;
 
-						Output::Debug("{} {} {} {} {} {}", i, column_max, GetWidth(), (i % column_max) * (GetWidth() - 24) / column_max, (i % column_max), (GetWidth() - 24) / column_max);
+						// Output::Debug("{} {} {} {} {} {}", i, column_max, GetWidth(), (i % column_max) * (GetWidth() - 24) / column_max, (i % column_max), (GetWidth() - 24) / column_max);
 
 						// cursor_rect = { 4 + text_offset + (index % column_max) * (GetWidth() - 24) / column_max, (index / column_max - GetTopRow()) * (menu_item_height + 10), (GetWidth() - 24) / column_max, menu_item_height };
 
@@ -144,7 +144,7 @@ void Window_MenuStatus_Custom::Refresh() {
 
 }
 std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, int index, int tx, int ty, Text::Alignment align) {
-	// Le premier groupe de capture (match[1]) contient la valeur entre crochets
+	
 	std::string variable = match[1].str();
 	int i = 0;
 	if (variable == "@id") {
@@ -155,98 +155,163 @@ std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, 
 	}
 	const Game_Actor& actor = *(Main_Data::game_party->GetActors()[i]);
 
-	// Le second groupe de capture (match[2]) contient la valeur après le point
 	std::string type = match[2].str();
 
 	// Output::Debug("Regex : {} {}", variable, type);
 
-	// Exemple de traitement en fonction des valeurs capturées
-	// Vous pouvez mettre votre propre logique ici
-	if (type == "name") {
-		auto s = actor.GetName();
-		std::string t = { s.begin(), s.end() };
-		return t;
-	} else 	if (type == "hp") {
-		std::string t = std::to_string(actor.GetHp());
-		return t;
-	} else if (type == "mhp") {
-		std::string t = std::to_string(actor.GetMaxHp());
-		return t;
-	}
-	else if (type == "mp") {
-		std::string t = std::to_string(actor.GetSp());
-		return t;
-	}
-	else if (type == "mmp") {
-		std::string t = std::to_string(actor.GetMaxSp());
-		return t;
-	}
-	else if (type == "exp") {
-		std::string t = std::to_string(actor.GetExp());
-		return t;
-	}
-	else if (type == "mexp") {
-		std::string t = std::to_string(actor.GetNextExp());
-		return t;
-	}
-	else if (type == "level") {
-		std::string t = std::to_string(actor.GetLevel());
-		return t;
-	}
-	else if (type == "class") {
-		auto s = actor.GetClassName();
-		std::string t = { s.begin(), s.end() };
-		return t;
-	}
-	else if (type == "title") {
-		auto s = actor.GetTitle();
-		std::string t = { s.begin(), s.end() };
-		return t;
-	}
-	else if (type == "state") {
-		const lcf::rpg::State* state = actor.GetSignificantState();
-		std::string t;
-		if (!state) {
-			auto s = lcf::Data::terms.normal_status;
-			t = { s.begin(), s.end() };
+	std::string t = "";
+
+	std::string mod[] = { "name", "hp", "mhp", "mp", "mmp", "exp", "mexp", "level", "class","title", "state", "face", "jhp", "jmp", "weapon", "shield","armor","helmet","accessory",
+	"atk", "def", "spi", "agi"};
+
+	for (auto m : mod) {
+		if (type.rfind(m, 0) == 0) {
+
+			if (m == "name") {
+				auto s = actor.GetName();
+				t = { s.begin(), s.end() };
+			}
+			else 	if (m == "hp") {
+				t = std::to_string(actor.GetHp());
+			}
+			else if (m == "mhp") {
+				t = std::to_string(actor.GetMaxHp());
+			}
+			else if (m == "mp") {
+				t = std::to_string(actor.GetSp());
+
+			}
+			else if (m == "mmp") {
+				t = std::to_string(actor.GetMaxSp());
+
+			}
+			else if (m == "exp") {
+				t = std::to_string(actor.GetExp());
+
+			}
+			else if (m == "mexp") {
+				t = std::to_string(actor.GetNextExp());
+
+			}
+			else if (m == "level") {
+				t = std::to_string(actor.GetLevel());
+
+			}
+			else if (m == "class") {
+				auto s = actor.GetClassName();
+				t = { s.begin(), s.end() };
+
+			}
+			else if (m == "title") {
+				auto s = actor.GetTitle();
+				t = { s.begin(), s.end() };
+
+			}
+			else if (m == "state") {
+				const lcf::rpg::State* state = actor.GetSignificantState();
+				if (!state) {
+					auto s = lcf::Data::terms.normal_status;
+					t = { s.begin(), s.end() };
+				}
+				else {
+					auto s = state->name;
+					t = { s.begin(), s.end() };
+				}
+
+
+			}
+			else if (m == "face") {
+				if (align == Text::AlignCenter)
+					tx -= 24;
+				else if (align == Text::AlignRight)
+					tx -= 48;
+
+				DrawActorFace(actor, tx, ty);
+				t = "";
+			}
+			else if (m == "jhp") {
+				if (align == Text::AlignCenter)
+					tx -= 12 + 16;
+				else if (align == Text::AlignRight)
+					tx -= 25 + 16;
+
+				DrawCustomGauge(actor, 0, actor.GetHp(), actor.GetMaxHp(), tx, ty);
+				t = "";
+			}
+			else if (m == "jmp") {
+				if (align == Text::AlignCenter)
+					tx -= 12 + 16;
+				else if (align == Text::AlignRight)
+					tx -= 25 + 16;
+
+				DrawCustomGauge(actor, 1, actor.GetSp(), actor.GetMaxSp(), tx, ty);
+				t = "";
+			}
+			else if (m == "weapon") {
+				if (actor.GetWeapon())
+				{
+					auto s = actor.GetWeapon()->name;
+					t = { s.begin(), s.end() };
+				}
+			}
+			else if (m == "shield") {
+				if (actor.GetShield())
+				{
+					auto s = actor.GetShield()->name;
+					t = { s.begin(), s.end() };
+				}
+				else if (actor.Get2ndWeapon()) {
+					auto s = actor.Get2ndWeapon()->name;
+					t = { s.begin(), s.end() };
+				}
+			}
+			else if (m == "armor") {
+				if (actor.GetArmor())
+				{
+					auto s = actor.GetArmor()->name;
+					t = { s.begin(), s.end() };
+				}
+			}
+			else if (m == "helmet") {
+				if (actor.GetHelmet())
+				{
+					auto s = actor.GetHelmet()->name;
+					t = { s.begin(), s.end() };
+				}
+			}
+			else if (m == "accessory") {
+				if (actor.GetAccessory())
+				{
+					auto s = actor.GetAccessory()->name;
+					t = { s.begin(), s.end() };
+				}
+			}
+			else if (m == "atk") {
+				t = std::to_string(actor.GetAtk());
+
+			}
+			else if (m == "def") {
+				t = std::to_string(actor.GetDef());
+
+			}
+			else if (m == "spi") {
+				t = std::to_string(actor.GetSpi());
+
+			}
+			else if (m == "agi") {
+				t = std::to_string(actor.GetAgi());
+
+			}
+
+
+			if (type.size() > m.size())
+				t += type.substr(m.size(), type.size() - m.size());
+
+			break;
 		}
-		else {
-			auto s = state->name;
-			t = { s.begin(), s.end() };
-		}
+	}
 
-		return t;
-	}
-	else if (type == "face") {
-		if (align == Text::AlignCenter)
-			tx -= 24;
-		else if (align == Text::AlignRight)
-			tx -= 48;
-
-		DrawActorFace(actor, tx, ty);
-		return "";
-	}
-	else if (type == "jhp") {
-		if (align == Text::AlignCenter)
-			tx -= 12 + 16;
-		else if (align == Text::AlignRight)
-			tx -= 25 + 16;
-
-		DrawCustomGauge(actor, 0, actor.GetHp(), actor.GetMaxHp(), tx, ty);
-		return "";
-	}
-	else if (type == "jmp") {
-		if (align == Text::AlignCenter)
-			tx -= 12 + 16;
-		else if (align == Text::AlignRight)
-			tx -= 25 + 16;
-
-		DrawCustomGauge(actor, 1, actor.GetSp(), actor.GetMaxSp(), tx, ty);
-		return "";
-	}
-	else {
-		return "";
-	}
+	return t;
 }
 
 
