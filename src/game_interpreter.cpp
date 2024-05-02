@@ -3134,6 +3134,13 @@ bool Game_Interpreter::CommandPlayerVisibility(lcf::rpg::EventCommand const& com
 
 bool Game_Interpreter::CommandMoveEvent(lcf::rpg::EventCommand const& com) { // code 11330
 	int event_id = com.parameters[0];
+	int repeat_ = com.parameters[2];
+	int mode = com.parameters[2] >> 8;
+
+	int repeat = ManiacBitmask(com.parameters[2], 0x1);
+
+	event_id = ValueOrVariable(mode, com.parameters[0]);
+
 	Game_Character* event = GetCharacter(event_id);
 	if (event != NULL) {
 		// If the event is a vehicle in use, push the commands to the player instead
@@ -3149,7 +3156,7 @@ bool Game_Interpreter::CommandMoveEvent(lcf::rpg::EventCommand const& com) { // 
 			move_freq = 6;
 		}
 
-		route.repeat = com.parameters[2] != 0;
+		route.repeat = repeat != 0;
 		route.skippable = com.parameters[3] != 0;
 
 		for (auto it = com.parameters.begin() + 4; it < com.parameters.end(); ) {
@@ -3584,6 +3591,15 @@ bool Game_Interpreter::CommandConditionalBranch(lcf::rpg::EventCommand const& co
 		}
 		break;
 	case 6:
+		value1 = ValueOrVariable(com.parameters[3], com.parameters[1]);
+
+		if (com.parameters[4] == 1) {
+			Game_Character* ch = Game_Character::GetCharacter(value1, value1);
+			if (ch != nullptr)
+				result = true;
+			break;
+		}
+		character = GetCharacter(value1);
 		// Orientation of char
 		character = GetCharacter(com.parameters[1]);
 		if (character != NULL) {
@@ -4459,13 +4475,13 @@ bool Game_Interpreter::CommandManiacGetPictureInfo(lcf::rpg::EventCommand const&
 			x = Utils::RoundTo<int>(data.current_x);
 			y = Utils::RoundTo<int>(data.current_y);
 			width = Utils::RoundTo<int>(width * data.current_magnify / 100.0);
-			height = Utils::RoundTo<int>(height * data.maniac_current_magnify_height / 100.0);
+			//height = Utils::RoundTo<int>(height * data.maniac_current_magnify_height / 100.0);
 			break;
 		case 2:
 			x = Utils::RoundTo<int>(data.finish_x);
 			y = Utils::RoundTo<int>(data.finish_y);
 			width = Utils::RoundTo<int>(width * data.finish_magnify / 100.0);
-			height = Utils::RoundTo<int>(height * data.maniac_finish_magnify_height / 100.0);
+			//height = Utils::RoundTo<int>(height * data.maniac_finish_magnify_height / 100.0);
 			break;
 	}
 
@@ -4622,12 +4638,99 @@ bool Game_Interpreter::CommandManiacKeyInputProcEx(lcf::rpg::EventCommand const&
 	return true;
 }
 
-bool Game_Interpreter::CommandManiacRewriteMap(lcf::rpg::EventCommand const&) {
+bool Game_Interpreter::CommandManiacRewriteMap(lcf::rpg::EventCommand const& com) {
 	if (!Player::IsPatchManiac()) {
 		return true;
 	}
 
-	Output::Warning("Maniac Patch: Command RewriteMap not supported");
+
+	int layer = com.parameters[2];
+	int tile_type = 0;
+	int tile_id = com.parameters[3];
+
+	std::bitset<32> f(com.parameters[0]);
+	//Output::Debug("B : {}", f.to_string());
+
+	if (f[0] == 1)
+		tile_type = 1;
+	if (f[1] == 1)
+		tile_type = 2;
+
+	if (tile_type >= 3)
+		tile_type = tile_type % 16;
+
+	int id = tile_id;
+	if (tile_type == 1)
+		id = Main_Data::game_variables.get()->Get(tile_id);
+	else if (tile_type == 2)
+		id = Main_Data::game_variables.get()->Get(Main_Data::game_variables.get()->Get(tile_id));
+
+	int ranged = com.parameters[1];
+
+	int x = com.parameters[4];
+	int y = com.parameters[5];
+	int w = com.parameters[6];
+	int h = com.parameters[7];
+
+	int x_type = 0;
+	int y_type = 0;
+	int w_type = 0;
+	int h_type = 0;
+
+	if (f[4] == 1)
+		x_type = 1;
+	else if (f[5] == 1)
+		x_type = 2;
+
+	if (x_type == 1)
+		x = Main_Data::game_variables.get()->Get(x);
+	else if (x_type == 2)
+		x = Main_Data::game_variables.get()->Get(Main_Data::game_variables.get()->Get(x));
+
+
+	if (f[8] == 1)
+		y_type = 1;
+	else if (f[9] == 1)
+		y_type = 2;
+
+	if (y_type == 1)
+		y = Main_Data::game_variables.get()->Get(y);
+	else if (y_type == 2)
+		y = Main_Data::game_variables.get()->Get(Main_Data::game_variables.get()->Get(y));
+
+
+	if (f[12] == 1)
+		w_type = 1;
+	else if (f[13] == 1)
+		w_type = 2;
+
+	if (w_type == 1)
+		w = Main_Data::game_variables.get()->Get(w);
+	else if (w_type == 2)
+		w = Main_Data::game_variables.get()->Get(Main_Data::game_variables.get()->Get(w));
+
+
+	if (f[16] == 1)
+		h_type = 1;
+	else if (f[17] == 1)
+		h_type = 2;
+
+	if (h_type == 1)
+		h = Main_Data::game_variables.get()->Get(h);
+	else if (h_type == 2)
+		h = Main_Data::game_variables.get()->Get(Main_Data::game_variables.get()->Get(h));
+
+
+	// Output::Debug("L{} R{} T{} ID{} X{} Y{} W{} H{} VX{} VY{} VW{} VH{}", layer, ranged, tile_type, id, x, y, w, h, x_type, y_type, w_type, h_type);
+
+
+	Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+	if (!scene)
+		return true;
+	for (int i = 0; i < w; i++)
+		for (int j = 0; j < h; j++)
+			scene->spriteset->ChangeTile(layer, x + i, y + j, id);
+
 	return true;
 }
 

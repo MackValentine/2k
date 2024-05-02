@@ -2037,3 +2037,18 @@ bool Game_Map::Parallax::FakeXPosition() {
 bool Game_Map::Parallax::FakeYPosition() {
 	return parallax_fake_y;
 }
+
+int Game_Map::ChangeTile(int layer, int x, int y, int new_id) {
+
+	int tile_index = x + y * GetTilesX();
+
+	//Output::Debug("{}", map->upper_layer[tile_index]);
+
+	if (layer == 0)
+		map->lower_layer[tile_index] = 5048 - 48 + (new_id)-18;
+	else
+		map->upper_layer[tile_index] = new_id + 10000;
+
+	SetNeedRefresh(true);
+	return 1;
+}

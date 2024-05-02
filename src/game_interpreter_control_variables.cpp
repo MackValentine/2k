@@ -359,10 +359,10 @@ int ControlVariables::Enemy(int op, int enemy_idx) {
 }
 
 int ControlVariables::Pow(int arg1, int arg2) {
-	return static_cast<int>(std::pow(arg1, arg2));
+	return static_cast<int>(std::pow(arg2, arg1));
 }
 
-int ControlVariables::Sqrt(int arg, int mul) {
+int ControlVariables::Sqrt(int mul, int arg) {
 	// This is not how negative sqrt works, just following the implementation here
 	int res = static_cast<int>(sqrt(abs(arg)) * mul);
 	if (arg < 0) {
