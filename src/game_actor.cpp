@@ -34,6 +34,9 @@
 #include "attribute.h"
 #include "rand.h"
 #include "algo.h"
+#include "scene_battle.h"
+#include "game_variables.h"
+#include "game_map.h"
 
 constexpr int max_level_2k = 50;
 constexpr int max_level_2k3 = 99;
@@ -229,6 +232,40 @@ bool Game_Actor::IsSkillUsable(int skill_id) const {
 	if (!skill) {
 		Output::Warning("IsSkillUsable: Invalid skill ID {}", skill_id);
 		return false;
+	}
+	if (CustomCheckSkill::used) {
+
+		int eventID = CustomCheckSkill::eventID;
+		int actorID = CustomCheckSkill::actorID;
+		int skillID = CustomCheckSkill::skillID;
+		int resultVar = CustomCheckSkill::result;
+
+
+		Game_CommonEvent* common_event = lcf::ReaderUtil::GetElement(Game_Map::GetCommonEvents(), eventID);
+		if (!common_event) {
+			Output::Warning("CallEvent: Can't call invalid common event {}", eventID);
+		}
+		else {
+
+			Main_Data::game_variables->Set(actorID, GetId());
+			Main_Data::game_variables->Set(skillID, skill_id);
+
+			if (Scene::instance->type == Scene::Battle)
+				Game_Battle::GetInterpreter().Push(common_event);
+			else
+				Game_Map::GetInterpreter().Push(common_event);
+
+			common_event->ForceCreate(eventID);
+			common_event->ForceUpdate(false);
+
+		}
+
+		int result = Main_Data::game_variables->Get(resultVar);
+
+		if (result == 0)
+			return false;
+		if (result == 1)
+			return true;
 	}
 
 	if (!skill->affect_attr_defence) {
