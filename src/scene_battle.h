@@ -36,8 +36,10 @@
 #include "window_command.h"
 #include "window_battlecommand.h"
 #include "window_battlestatus.h"
+#include "window_battlestatusCustom.h"
 #include "window_message.h"
 #include "game_battle.h"
+#include "scene_menu_custom.h"
 #include "window_target.h"
 
 namespace CustomCheckSkill {
@@ -47,6 +49,12 @@ namespace CustomCheckSkill {
 	extern int actorID;
 	extern int skillID;
 	extern int result;
+}
+
+namespace CustomBattle {
+	extern std::map<std::string, MenuCustomWindow> customWindows;
+
+	extern bool used;
 }
 
 namespace AutoBattle {

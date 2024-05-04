@@ -38,6 +38,7 @@
 #include <lcf/scope_guard.h>
 #include "scene_battle.h"
 #include "scene_menu.h"
+#include "scene_menu_custom.h"
 #include <lcf/rpg/savetarget.h>
 #include <algorithm>
 #include <cmath>
@@ -297,7 +298,12 @@ void Game_Player::UpdateNextMovementAction() {
 
 		ResetAnimation();
 		Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-		Scene::instance->SetRequestedScene(std::make_shared<Scene_Menu>());
+
+		if (!CustomMenu::used)
+			Scene::instance->SetRequestedScene(std::make_shared<Scene_Menu>());
+		else
+			Scene::instance->SetRequestedScene(std::make_shared<Scene_Menu_Custom>());
+
 		return;
 	}
 

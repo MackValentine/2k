@@ -25,6 +25,7 @@
 #include "bitmap.h"
 #include "font.h"
 #include "player.h"
+#include <output.h>
 
 Window_Base::Window_Base(Scene* parent, WindowType type, int x, int y, int width, int height, Drawable::Flags flags)
 	: Window(parent, type, flags)
@@ -335,6 +336,38 @@ void Window_Base::DrawGauge(const Game_Battler& actor, int cx, int cy, int alpha
 
 	const auto atb = actor.GetAtbGauge();
 	const auto gauge_w = 25 * atb / actor.GetMaxAtbGauge();
+	if (gauge_w > 0) {
+		// Full or not full bar
+		Rect gauge_bar(full ? 64 : 48, gauge_y, 16, 16);
+		Rect bar_rect(cx + 16, cy, gauge_w, 16);
+		contents->StretchBlit(bar_rect, *system2, gauge_bar, alpha);
+	}
+}
+
+void Window_Base::DrawCustomGauge(const Game_Battler& actor, int type, int act, int max, int cx, int cy, int alpha) const {
+	BitmapRef system2 = Cache::System2();
+	if (!system2) {
+			return;
+	}
+
+	bool full = act == max;
+
+	// Which gauge (0 - 2)
+	int gauge_y = 32 + type * 16;
+
+	// Three components of the gauge
+	Rect gauge_left(0, gauge_y, 16, 16);
+	Rect gauge_center(16, gauge_y, 16, 16);
+	Rect gauge_right(32, gauge_y, 16, 16);
+
+	Rect dst_rect(cx + 16, cy, 25, 16);
+
+	contents->Blit(cx + 0, cy, *system2, gauge_left, alpha);
+	contents->Blit(cx + 16 + 25, cy, *system2, gauge_right, alpha);
+	contents->StretchBlit(dst_rect, *system2, gauge_center, alpha);
+
+	const auto gauge_w = (25 * act) / max;
+
 	if (gauge_w > 0) {
 		// Full or not full bar
 		Rect gauge_bar(full ? 64 : 48, gauge_y, 16, 16);

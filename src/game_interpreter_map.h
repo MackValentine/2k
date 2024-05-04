@@ -85,6 +85,9 @@ private:
 	// Custom command for changing mouse control events
 	bool CommandSetMouseMoveSprite(lcf::rpg::EventCommand const& com);
 
+	bool CommandSetCustomMenu(lcf::rpg::EventCommand const& com);
+	bool CommandSetCustomBattleHUD(lcf::rpg::EventCommand const& com);
+
 	AsyncOp ContinuationShowInnStart(int indent, int choice_result, int price);
 
 	static std::vector<Game_Character*> pending;

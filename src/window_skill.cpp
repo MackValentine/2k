@@ -28,6 +28,10 @@
 #include "output.h"
 #include <lcf/reader_util.h>
 #include "game_battle.h"
+#include "scene_battle.h"
+#include "game_variables.h"
+#include "game_map.h"
+#include "game_strings.h"
 
 Window_Skill::Window_Skill(Scene* parent, int ix, int iy, int iwidth, int iheight) :
 	Window_Selectable(parent, ix, iy, iwidth, iheight), actor_id(-1), subset(0) {
@@ -126,4 +130,72 @@ bool Window_Skill::CheckEnable(int skill_id) {
 
 void Window_Skill::SetSubsetFilter(int subset) {
 	this->subset = subset;
+}
+
+void Window_BattleSkillCustom::DrawItem(int index) {
+	Rect rect = GetItemRect(index);
+	contents->ClearRect(rect);
+
+	int skill_id = data[index];
+
+	if (skill_id > 0) {
+		const Game_Actor* actor = Main_Data::game_actors->GetActor(actor_id);
+		int costs = actor->CalculateSkillCost(skill_id);
+
+		bool enabled = CheckEnable(skill_id);
+		int color = !enabled ? Font::ColorDisabled : Font::ColorDefault;
+
+		// contents->TextDraw(rect.x + rect.width - 24, rect.y, color, fmt::format("{}{:3d}", lcf::rpg::Terms::TermOrDefault(lcf::Data::terms.easyrpg_skill_cost_separator, "-"), costs));
+
+		// Skills are guaranteed to be valid
+		// DrawSkillName(*lcf::ReaderUtil::GetElement(lcf::Data::skills, skill_id), rect.x, rect.y, enabled);
+
+
+		std::string win_name = "Skills";
+		int actorIndex = CustomBattle::customWindows[win_name].actorIndex;
+		int varID = CustomBattle::customWindows[win_name].varID;
+		int stringVarID = CustomBattle::customWindows[win_name].stringVarID;
+		int eventID = CustomBattle::customWindows[win_name].eventID;
+
+		if (eventID > 0) {
+
+			// Set up XY var
+			Main_Data::game_variables->Set(actorIndex, actor_id);
+			Main_Data::game_variables->Set(varID, skill_id);
+
+			// Call common event
+			Game_CommonEvent* common_event = lcf::ReaderUtil::GetElement(Game_Map::GetCommonEvents(), eventID);
+			if (!common_event) {
+				Output::Warning("CallEvent: Can't call invalid common event {}", eventID);
+			}
+			else {
+
+
+				Game_Battle::GetInterpreter().Push(common_event);
+				common_event->ForceCreate(eventID);
+				common_event->ForceUpdate(false);
+
+				std::string str_VarId = std::to_string(stringVarID);
+				StringView sView = "\\\\t[" + str_VarId + "]";
+
+				std::string text = Game_Strings::Extract(sView, false);
+				contents->TextDraw(rect.x, rect.y, color, text);
+
+			}
+
+		}
+		else {
+			const Game_Actor* actor = Main_Data::game_actors->GetActor(actor_id);
+			int costs = actor->CalculateSkillCost(skill_id);
+
+			bool enabled = CheckEnable(skill_id);
+			int color = !enabled ? Font::ColorDisabled : Font::ColorDefault;
+
+			contents->TextDraw(rect.x + rect.width - 24, rect.y, color, fmt::format("{}{:3d}", lcf::rpg::Terms::TermOrDefault(lcf::Data::terms.easyrpg_skill_cost_separator, "-"), costs));
+
+			// Skills are guaranteed to be valid
+			DrawSkillName(*lcf::ReaderUtil::GetElement(lcf::Data::skills, skill_id), rect.x, rect.y, enabled);
+		}
+
+	}
 }

@@ -47,6 +47,16 @@
 #include "autobattle.h"
 #include "enemyai.h"
 #include "feature.h"
+#include <scene_menu_custom.h>
+
+
+
+namespace CustomBattle {
+	std::map<std::string, MenuCustomWindow> customWindows;
+
+	bool used = false;
+}
+
 
 namespace CustomCheckSkill {
 	bool used = false;
@@ -238,6 +248,77 @@ void Scene_Battle::CreateUi() {
 
 	message_window = std::make_unique<Window_Message>(this, Player::menu_offset_x, (Player::menu_offset_y + MENU_HEIGHT - 80), MENU_WIDTH, 80);
 	Game_Message::SetWindow(message_window.get());
+
+	if (CustomBattle::used) {
+
+		Output::Debug("CustomBattle");
+		std::string win_name = "Options";
+
+		auto it2 = CustomBattle::customWindows.find(win_name);
+
+		if (it2 != CustomBattle::customWindows.end()) {
+
+			options_window->SetX(CustomBattle::customWindows[win_name].x);
+			options_window->SetY(CustomBattle::customWindows[win_name].y);
+			options_window->SetWidth(CustomBattle::customWindows[win_name].w);
+			options_window->SetHeight(CustomBattle::customWindows[win_name].h);
+			options_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+			options_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+
+			options_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
+			options_window->Refresh();
+
+			Output::Debug("Options");
+		}
+
+		win_name = "Items";
+		it2 = CustomBattle::customWindows.find(win_name);
+
+		if (it2 != CustomBattle::customWindows.end()) {
+
+			item_window->SetX(CustomBattle::customWindows[win_name].x);
+			item_window->SetY(CustomBattle::customWindows[win_name].y);
+			item_window->SetWidth(CustomBattle::customWindows[win_name].w);
+			item_window->SetHeight(CustomBattle::customWindows[win_name].h);
+			item_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+			item_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+			item_window->SetColumnMax(CustomBattle::customWindows[win_name].column);
+
+			item_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
+			item_window->Refresh();
+
+		}
+
+		win_name = "Skills";
+		it2 = CustomBattle::customWindows.find(win_name);
+		
+
+		if (it2 != CustomBattle::customWindows.end()) {
+
+			skill_window.reset(new Window_BattleSkillCustom(Player::menu_offset_x, (Player::menu_offset_y + MENU_HEIGHT - 80), MENU_WIDTH, 80));
+
+			skill_window->SetX(CustomBattle::customWindows[win_name].x);
+			skill_window->SetY(CustomBattle::customWindows[win_name].y);
+			skill_window->SetWidth(CustomBattle::customWindows[win_name].w);
+			skill_window->SetHeight(CustomBattle::customWindows[win_name].h);
+			skill_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+			skill_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+			skill_window->SetColumnMax(CustomBattle::customWindows[win_name].column);
+			skill_window->SetMenuItemHeight(CustomBattle::customWindows[win_name].itemHeight);
+
+			skill_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
+			skill_window->SetHelpWindow(help_window.get());
+		}
+	}
+	else {
+
+		skill_window.reset(new Window_BattleSkill(Player::menu_offset_x, (Player::menu_offset_y + MENU_HEIGHT - 80), MENU_WIDTH, 80));
+
+		skill_window->SetHelpWindow(help_window.get());
+	}
 }
 
 void Scene_Battle::UpdateScreen() {

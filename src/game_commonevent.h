@@ -62,7 +62,6 @@ public:
 	 */
 	AsyncOp ForceUpdate(bool resume_async);
 	void ForceCreate(int ce_ID);
-
 	/**
 	 * Gets common event index.
 	 *

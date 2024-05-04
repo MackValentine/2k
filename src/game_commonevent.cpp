@@ -87,7 +87,6 @@ AsyncOp Game_CommonEvent::ForceUpdate(bool resume_async) {
 	return {};
 }
 
-
 int Game_CommonEvent::GetIndex() const {
 	return common_event_id;
 }
