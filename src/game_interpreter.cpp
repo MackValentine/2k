@@ -826,6 +826,8 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacControlStrings(com);
 		case Cmd::Maniac_CallCommand:
 			return CommandManiacCallCommand(com);
+		case 9997:
+			return SetBattlerPosition(com);
 		default:
 			return true;
 	}
@@ -5160,4 +5162,28 @@ int Game_Interpreter::ManiacBitmask(int value, int mask) const {
 	}
 
 	return value;
+}
+
+bool Game_Interpreter::SetBattlerPosition(lcf::rpg::EventCommand const& com) {
+
+	int actorID = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int posX = com.parameters[2];
+	int posY = com.parameters[3];
+
+	auto actor = Main_Data::game_actors->GetActor(actorID);
+
+	std::string str = com.string.c_str();
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+
+	bool b = str == "true";
+
+	if (actor) {
+		actor->SetOriginalPosition(posX, posY);
+		actor->SetLockDirection(b);
+	}
+	else
+		Output::Warning("Invalid actor ID {}", actorID);
+
+
+	return true;
 }

@@ -762,3 +762,6 @@ int Game_Battler::ChangeAgiModifier(int modifier) {
 	return delta;
 }
 
+void Game_Battler::SetLockDirection(bool b) {
+	lockDirection = b;
+}

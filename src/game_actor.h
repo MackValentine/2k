@@ -930,6 +930,10 @@ public:
 
 	int GetActorAi() const;
 
+	int fOriginalX = -999;
+	int fOriginalY = -999;
+	void SetOriginalPosition(int fx, int fy);
+
 private:
 	void AdjustEquipmentStates(const lcf::rpg::Item* item, bool add, bool allow_battle_states);
 	void Fixup();
