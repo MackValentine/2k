@@ -275,6 +275,12 @@ public:
 	 */
 	bool HasStrongDefense() const override;
 
+	// Animated enemy
+	int GetOffsetSpriteAnimated();
+	int GetWeaponID();
+	int GetAnimationActorID();
+	void SetWeapon(int id);
+
 protected:
 	const lcf::rpg::Enemy* enemy = nullptr;
 	const lcf::rpg::TroopMember* troop_member = nullptr;
@@ -284,6 +290,12 @@ protected:
 	int blink_timer = 0;
 	int death_timer = 0;
 	int explode_timer = 0;
+
+	// Animated enemy
+	int battleAnimationID = 0;
+	int animationActorID;
+	int offset_sprite_h = 0;
+	int weaponID = 0;
 };
 
 inline Game_Battler::BattlerType Game_Enemy::GetType() const {
@@ -311,7 +323,7 @@ inline bool Game_Enemy::IsTransparent() const {
 }
 
 inline int Game_Enemy::GetBattleAnimationId() const {
-	return 0;
+	return battleAnimationID;
 }
 
 inline int Game_Enemy::GetHue() const {

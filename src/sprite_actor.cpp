@@ -31,7 +31,7 @@
 #include "feature.h"
 #include "game_battle.h"
 
-Sprite_Actor::Sprite_Actor(Game_Actor* actor)
+Sprite_Actor::Sprite_Actor(Game_Battler* actor)
 	: Sprite_Battler(actor, actor->GetId())
 {
 	CreateSprite();
@@ -44,8 +44,9 @@ Sprite_Actor::Sprite_Actor(Game_Actor* actor)
 Sprite_Actor::~Sprite_Actor() {
 }
 
-Game_Actor* Sprite_Actor::GetBattler() const {
-	return static_cast<Game_Actor*>(Sprite_Battler::GetBattler());
+Game_Battler* Sprite_Actor::GetBattler() const {
+	return Sprite_Battler::GetBattler();
+	//return static_cast<Game_Actor*>(Sprite_Battler::GetBattler());
 }
 
 void Sprite_Actor::Update() {
@@ -131,8 +132,10 @@ void Sprite_Actor::Update() {
 	if (animation) {
 		animation->SetVisible(IsVisible());
 	}
-
-	SetFlipX(battler->IsDirectionFlipped());
+	bool b = battler->IsDirectionFlipped();
+	if (GetBattler()->GetType() == Game_Battler::Type_Enemy && GetBattler()->GetBattleAnimationId() > 0)
+		b = !b;
+	SetFlipX(b);
 }
 
 void Sprite_Actor::SetAnimationState(int state, LoopState loop, int animation_id) {

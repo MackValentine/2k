@@ -35,7 +35,7 @@ public:
 	 *
 	 * @param actor game battler to display
 	 */
-	Sprite_Weapon(Game_Actor* actor);
+	Sprite_Weapon(Game_Battler* actor);
 
 	~Sprite_Weapon() override;
 
@@ -58,7 +58,7 @@ protected:
 	void CreateSprite();
 	void OnBattleWeaponReady(FileRequestResult* result, int32_t weapon_index);
 
-	Game_Actor* battler;
+	Game_Battler* battler;
 
 	BitmapRef graphic;
 	int weapon_animation_id = 0;
