@@ -57,7 +57,7 @@ public:
 	 *
 	 * @param index index of skill to draw.
 	 */
-	void DrawItem(int index);
+	virtual void DrawItem(int index);
 
 	/**
 	 * Updates the help window.
@@ -126,5 +126,24 @@ inline void Window_BattleSkill::SaveActorIndex(int which_actor) {
 inline void Window_BattleSkill::RestoreActorIndex(int which_actor) {
 	SetIndex(actor_index[which_actor]);
 }
+
+/**
+ * Window_Skill class.
+ */
+class Window_BattleSkillCustom : public Window_BattleSkill {
+public:
+	using Window_BattleSkill::Window_BattleSkill;
+
+	/**
+	 * Saves the value of GetIndex() for actor.
+	 *
+	 * @param which_actor which actor to save
+	 **/
+	void DrawItem(int id) override;
+
+
+
+private:
+};
 
 #endif

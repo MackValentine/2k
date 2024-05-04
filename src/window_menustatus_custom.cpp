@@ -120,7 +120,7 @@ void Window_MenuStatus_Custom::Refresh() {
 
 						// cursor_rect = { 4 + text_offset + (index % column_max) * (GetWidth() - 24) / column_max, (index / column_max - GetTopRow()) * (menu_item_height + 10), (GetWidth() - 24) / column_max, menu_item_height };
 
-						contents->TextDraw(tx, ty, Font::ColorDefault, ParserText(stat.text, i, tx, ty, align), align);
+						contents->TextDraw(tx, ty, Font::ColorDefault, ParserText(this, stat.text, i, tx, ty, align), align);
 					}
 				}
 			}
@@ -136,14 +136,15 @@ void Window_MenuStatus_Custom::Refresh() {
 				int tx = stat.x;
 				int ty = stat.y;
 				std::string text = Game_Strings::Extract(stat.text, false);
-				text = ParserText(text, 0, tx, ty, align);
+				text = ParserText(this, text, 0, tx, ty, align);
 				contents->TextDraw(tx, ty, Font::ColorDefault, text, align);
 			}
 		}
 	}
 
 }
-std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, int index, int tx, int ty, Text::Alignment align) {
+
+std::string Window_MenuStatus_Custom::replaceFunction(Window_Base* w, const std::smatch& match, int index, int tx, int ty, Text::Alignment align) {
 	
 	std::string variable = match[1].str();
 	int i = 0;
@@ -161,7 +162,7 @@ std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, 
 
 	std::string t = "";
 
-	std::string mod[] = { "name", "hp", "mhp", "mp", "mmp", "exp", "mexp", "level", "class","title", "state", "face", "jhp", "jmp", "weapon", "shield","armor","helmet","accessory",
+	std::string mod[] = { "name", "hp", "mhp", "mp", "mmp", "exp", "mexp", "level", "class","title", "state", "face", "ghp", "gmp", "gatb", "weapon", "shield","armor","helmet","accessory",
 	"atk", "def", "spi", "agi"};
 
 	for (auto m : mod) {
@@ -226,25 +227,34 @@ std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, 
 				else if (align == Text::AlignRight)
 					tx -= 48;
 
-				DrawActorFace(actor, tx, ty);
+				w->DrawActorFace(actor, tx, ty);
 				t = "";
 			}
-			else if (m == "jhp") {
+			else if (m == "ghp") {
 				if (align == Text::AlignCenter)
 					tx -= 12 + 16;
 				else if (align == Text::AlignRight)
 					tx -= 25 + 16;
 
-				DrawCustomGauge(actor, 0, actor.GetHp(), actor.GetMaxHp(), tx, ty);
+				w->DrawCustomGauge(actor, 0, actor.GetHp(), actor.GetMaxHp(), tx, ty);
 				t = "";
 			}
-			else if (m == "jmp") {
+			else if (m == "gmp") {
 				if (align == Text::AlignCenter)
 					tx -= 12 + 16;
 				else if (align == Text::AlignRight)
 					tx -= 25 + 16;
 
-				DrawCustomGauge(actor, 1, actor.GetSp(), actor.GetMaxSp(), tx, ty);
+				w->DrawCustomGauge(actor, 1, actor.GetSp(), actor.GetMaxSp(), tx, ty);
+				t = "";
+			}
+			else if (m == "gatb") {
+				if (align == Text::AlignCenter)
+					tx -= 12 + 16;
+				else if (align == Text::AlignRight)
+					tx -= 25 + 16;
+
+				w->DrawCustomGauge(actor, 2, actor.GetAtbGauge(), actor.GetMaxAtbGauge(), tx, ty);
 				t = "";
 			}
 			else if (m == "weapon") {
@@ -315,7 +325,7 @@ std::string Window_MenuStatus_Custom::replaceFunction(const std::smatch& match, 
 }
 
 
-std::string Window_MenuStatus_Custom::ParserText(std::string text, int index, int tx, int ty, Text::Alignment align) {
+std::string Window_MenuStatus_Custom::ParserText(Window_Base* w, std::string text, int index, int tx, int ty, Text::Alignment align) {
 	std::regex pattern("\\\\a\\[(.*?)\\]\\.([^\\s]*)");
 
 	// Utilisation de std::regex_iterator pour parcourir les correspondances
@@ -332,7 +342,7 @@ std::string Window_MenuStatus_Custom::ParserText(std::string text, int index, in
 		resultat += it->prefix();
 
 		// Appel de la fonction de remplacement et ajout du résultat au texte final
-		resultat += replaceFunction(*it, index, tx, ty, align);
+		resultat += replaceFunction(w, *it, index, tx, ty, align);
 
 		// Déplacement au prochain match
 		lastPos = it->position() + it->length();

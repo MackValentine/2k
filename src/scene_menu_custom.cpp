@@ -53,6 +53,8 @@ namespace CustomMenu {
 
 	int parallax_x = 0;
 	int parallax_y = 0;
+
+	bool used = false;
 }
 
 Scene_Menu_Custom::Scene_Menu_Custom(int menu_index) :
@@ -79,7 +81,7 @@ void Scene_Menu_Custom::Start() {
 	// Gold Window
 	gold_window.reset(new Window_Gold(Player::menu_offset_x, (Player::screen_height - gold_window_height - Player::menu_offset_y), gold_window_width, gold_window_height));
 
-
+	Output::Debug("CustomMenu");
 
 	std::string win_name = "Gold";
 	auto it2 = CustomMenu::customWindows.find(win_name);

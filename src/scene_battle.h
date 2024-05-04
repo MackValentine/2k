@@ -36,8 +36,16 @@
 #include "window_command.h"
 #include "window_battlecommand.h"
 #include "window_battlestatus.h"
+#include "window_battlestatusCustom.h"
 #include "window_message.h"
 #include "game_battle.h"
+#include "scene_menu_custom.h"
+
+namespace CustomBattle {
+	extern std::map<std::string, MenuCustomWindow> customWindows;
+
+	extern bool used;
+}
 
 namespace AutoBattle {
 class AlgorithmBase;

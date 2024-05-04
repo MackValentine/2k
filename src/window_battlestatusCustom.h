@@ -15,29 +15,31 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EP_WINDOW_MENUSTATUS_CUSTOM_H
-#define EP_WINDOW_MENUSTATUS_CUSTOM_H
+#ifndef EP_WINDOW_BATTLESTATUSCUSTOM_H
+#define EP_WINDOW_BATTLESTATUSCUSTOM_H
 
 // Headers
-#include "window_menustatus.h"
-#include <regex>
-#include "output.h"
+#include "window_battlestatus.h"
+#include "bitmap.h"
 
 /**
- * Window MenuStatus Class
+ * Window BattleStatus Class.
+ * Displays the party battle status.
  */
-class Window_MenuStatus_Custom : public Window_MenuStatus {
+class Window_BattleStatusCustom : public Window_BattleStatus {
 public:
-	Window_MenuStatus_Custom(int ix, int iy, int iwidth, int iheight);
-	void Refresh();
+	/**
+	 * Constructor.
+	 */
+	Window_BattleStatusCustom(int ix, int iy, int iwidth, int iheight, bool enemy = false);
+
+	/**
+	 * Renders the current status on the window.
+	 */
+	void Refresh() override;
+	void RefreshGauge() override;
+
 	void UpdateCursorRect() override;
-
-	static std::string ParserText(Window_Base* w, std::string text, int index, int tx, int ty, Text::Alignment align);
-	static std::string replaceFunction(Window_Base* w, const std::smatch& match, int index, int tx, int ty, Text::Alignment align);
-
-	Game_Actor* GetActor() const;
-
-	bool customised = false;
 
 protected:
 	int text_offset = 0;

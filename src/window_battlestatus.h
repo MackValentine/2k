@@ -49,7 +49,7 @@ public:
 	/**
 	 * Renders the current status on the window.
 	 */
-	void Refresh();
+	virtual void Refresh();
 
 	/**
 	 * Updates the window state.
@@ -79,7 +79,7 @@ protected:
 	/**
 	 * Redraws the characters time gauge.
 	 */
-	void RefreshGauge();
+	virtual void RefreshGauge();
 
 	void DrawGaugeSystem2(int x, int y, int cur_value, int max_value, int which);
 	void DrawNumberSystem2(int x, int y, int value);

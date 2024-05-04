@@ -61,6 +61,11 @@ public:
 	std::vector<MenuCustomStatus> stats;
 
 	int itemHeight = 58;
+
+	int eventID = 0;
+	int actorIndex = 0;
+	int varID = 0;
+	int stringVarID = 0;
 };
 
 namespace CustomMenu {
@@ -74,6 +79,9 @@ namespace CustomMenu {
 
 	extern int parallax_x;
 	extern int parallax_y;
+
+	extern bool used;
+
 }
 /**
  * Scene Menu class.

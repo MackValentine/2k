@@ -63,6 +63,30 @@ AsyncOp Game_CommonEvent::Update(bool resume_async) {
 	return {};
 }
 
+void Game_CommonEvent::ForceCreate(int ce_ID) {
+	auto* ce = lcf::ReaderUtil::GetElement(lcf::Data::commonevents, ce_ID);
+
+	{
+		if (!interpreter)
+			interpreter.reset(new Game_Interpreter_Map());
+		interpreter->Push(this);
+	}
+}
+
+AsyncOp Game_CommonEvent::ForceUpdate(bool resume_async) {
+	if (interpreter) {
+		assert(interpreter->IsRunning());
+		interpreter->Update(!resume_async);
+
+		// Suspend due to async op ...
+		if (interpreter->IsAsyncPending()) {
+			return interpreter->GetAsyncOp();
+		}
+	}
+
+	return {};
+}
+
 int Game_CommonEvent::GetIndex() const {
 	return common_event_id;
 }

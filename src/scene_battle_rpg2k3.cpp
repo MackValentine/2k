@@ -301,10 +301,19 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 	enemy_cursor.reset(new Sprite());
 
 	if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_gauge) {
-		item_window->SetX(Player::menu_offset_x);
-		item_window->SetY(Player::menu_offset_y + 64);
-		skill_window->SetX(Player::menu_offset_x);
-		skill_window->SetY(Player::menu_offset_y + 64);
+
+		std::string win_name = "Items";
+		auto it2 = CustomBattle::customWindows.find(win_name);
+		if (!(it2 != CustomBattle::customWindows.end())) {
+			item_window->SetX(Player::menu_offset_x);
+			item_window->SetY(Player::menu_offset_y + 64);
+		}
+		win_name = "Skills";
+		it2 = CustomBattle::customWindows.find(win_name);
+		if (!(it2 != CustomBattle::customWindows.end())) {
+			skill_window->SetX(Player::menu_offset_x);
+			skill_window->SetY(Player::menu_offset_y + 64);
+		}
 	}
 
 	if (lcf::Data::battlecommands.battle_type != lcf::rpg::BattleCommands::BattleType_traditional) {
@@ -556,6 +565,26 @@ void Scene_Battle_Rpg2k3::CreateBattleTargetWindow() {
 	}
 
 	target_window->SetSingleColumnWrapping(true);
+
+	if (CustomBattle::used) {
+		std::string win_name = "Targets";
+
+		auto it2 = CustomBattle::customWindows.find(win_name);
+
+		if (it2 != CustomBattle::customWindows.end()) {
+
+			target_window->SetX(CustomBattle::customWindows[win_name].x);
+			target_window->SetY(CustomBattle::customWindows[win_name].y);
+			target_window->SetWidth(CustomBattle::customWindows[win_name].w);
+			target_window->SetHeight(CustomBattle::customWindows[win_name].h);
+			target_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+			target_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+
+			target_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
+			target_window->Refresh();
+		}
+	}
 }
 
 void Scene_Battle_Rpg2k3::RefreshTargetWindow() {
@@ -589,7 +618,38 @@ void Scene_Battle_Rpg2k3::CreateBattleStatusWindow() {
 			break;
 	}
 
-	status_window.reset(new Window_BattleStatus(x, y, w, h));
+	std::string win_name = "Status";
+	CustomBattle::customWindows.find(win_name);
+
+	auto it2 = CustomBattle::customWindows.find(win_name);
+
+	if (it2 != CustomBattle::customWindows.end()) {
+
+		x = CustomBattle::customWindows[win_name].x;
+		y = CustomBattle::customWindows[win_name].y;
+		w = CustomBattle::customWindows[win_name].w;
+		h = CustomBattle::customWindows[win_name].h;
+
+		Window_BattleStatus* win;
+		if (CustomBattle::customWindows["Status"].stats.size() > 0)
+			win = new Window_BattleStatusCustom(x, y, w, h);
+		else
+			win = new Window_BattleStatus(x, y, w, h);
+
+		win->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+		win->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+
+		win->SetVisible(!CustomBattle::customWindows[win_name].hide);
+		win->SetColumnMax(CustomBattle::customWindows[win_name].column);
+		win->SetMenuItemHeight(CustomBattle::customWindows[win_name].itemHeight);
+
+		win->Refresh();
+
+		status_window.reset(win);
+	}
+	else {
+		status_window.reset(new Window_BattleStatus(x, y, w, h));
+	}
 	status_window->SetZ(Priority_Window + 1);
 }
 
@@ -653,6 +713,27 @@ void Scene_Battle_Rpg2k3::CreateBattleCommandWindow() {
 		int transp = IsTransparent() ? 160 : 255;
 		command_window->SetBackOpacity(transp);
 	}
+
+	if (CustomBattle::used) {
+		std::string win_name = "Commands";
+
+		auto it2 = CustomBattle::customWindows.find(win_name);
+
+		if (it2 != CustomBattle::customWindows.end()) {
+
+			command_window->SetX(CustomBattle::customWindows[win_name].x);
+			command_window->SetY(CustomBattle::customWindows[win_name].y);
+			command_window->SetWidth(CustomBattle::customWindows[win_name].w);
+			command_window->SetHeight(CustomBattle::customWindows[win_name].h);
+			command_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+			command_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+
+			command_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
+			command_window->Refresh();
+		}
+	}
+
 }
 
 void Scene_Battle_Rpg2k3::RefreshCommandWindow(const Game_Actor* actor) {
@@ -700,13 +781,33 @@ void Scene_Battle_Rpg2k3::ResetWindows(bool make_invisible) {
 
 void Scene_Battle_Rpg2k3::MoveCommandWindows(int x, int frames) {
 	if (lcf::Data::battlecommands.battle_type != lcf::rpg::BattleCommands::BattleType_traditional) {
-		options_window->InitMovement(options_window->GetX(), options_window->GetY(),
+
+		if (CustomBattle::used) {
+			int ox = options_window->GetX() + options_window->GetWidth();
+			if (x < Player::menu_offset_x)
+				ox = options_window->GetX() - options_window->GetWidth();
+			options_window->InitMovement(options_window->GetX(), options_window->GetY(),
+				ox, options_window->GetY(), frames);
+		}
+		else {
+			options_window->InitMovement(options_window->GetX(), options_window->GetY(),
 				x, options_window->GetY(), frames);
+			x += options_window->GetWidth();
+		}
 
-		x += options_window->GetWidth();
 
-		status_window->InitMovement(status_window->GetX(), status_window->GetY(),
+		if (CustomBattle::used) {
+			int ox = status_window->GetX() + options_window->GetWidth();
+			if (x < Player::menu_offset_x)
+				ox = status_window->GetX() - options_window->GetWidth();
+
+			status_window->InitMovement(status_window->GetX(), status_window->GetY(),
+				ox, status_window->GetY(), frames);
+		}
+		else {
+			status_window->InitMovement(status_window->GetX(), status_window->GetY(),
 				x, status_window->GetY(), frames);
+		}
 
 		if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_alternative) {
 			x += status_window->GetWidth();
@@ -1473,6 +1574,9 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionIt
 
 	if (scene_action_substate == eBegin) {
 		ResetWindows(true);
+
+		status_window->SetVisible(true);
+
 		item_window->SetVisible(true);
 		item_window->SetActive(true);
 		item_window->SetActor(active_actor);
@@ -1514,6 +1618,9 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionSk
 
 	if (scene_action_substate == eBegin) {
 		ResetWindows(true);
+
+
+		status_window->SetVisible(true);
 
 		skill_window->SetActive(true);
 		skill_window->SetActor(active_actor->GetId());
@@ -2909,6 +3016,23 @@ void Scene_Battle_Rpg2k3::RecreateSpWindow(Game_Battler* battler) {
 	sp_window->SetZ(Priority_Window + 2);
 	if (battler) {
 		sp_window->SetBattler(*battler);
+	}
+
+	std::string win_name = "SP";
+
+	auto it2 = CustomBattle::customWindows.find(win_name);
+
+	if (it2 != CustomBattle::customWindows.end()) {
+
+		sp_window->SetX(CustomBattle::customWindows[win_name].x);
+		sp_window->SetY(CustomBattle::customWindows[win_name].y);
+		sp_window->SetWidth(CustomBattle::customWindows[win_name].w);
+		sp_window->SetHeight(CustomBattle::customWindows[win_name].h);
+		sp_window->SetOpacity(CustomBattle::customWindows[win_name].opacity);
+		sp_window->SetBackOpacity(CustomBattle::customWindows[win_name].opacity);
+
+		sp_window->SetVisible(!CustomBattle::customWindows[win_name].hide);
+
 	}
 }
 

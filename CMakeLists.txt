@@ -392,6 +392,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/window_battlemessage.h
 	src/window_battlestatus.cpp
 	src/window_battlestatus.h
+	src/window_battlestatusCustom.cpp
+	src/window_battlestatusCustom.h
 	src/window_command.cpp
 	src/window_command.h
 	src/window_command_custom.cpp
