@@ -144,6 +144,9 @@ bool Game_Interpreter_Map::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandToggleAtbMode(com);
 		case static_cast <Game_Interpreter::Cmd>(2002): // Cmd::EasyRpg_TriggerEventAt
 			return CommandEasyRpgTriggerEventAt(com);
+		// TODO : Replace =>
+		case 9999:
+			return CommandSetMouseMoveSprite(com);
 		default:
 			return Game_Interpreter::ExecuteCommand(com);
 	}
@@ -682,6 +685,25 @@ bool Game_Interpreter_Map::CommandEasyRpgTriggerEventAt(lcf::rpg::EventCommand c
 	int y = ValueOrVariable(com.parameters[2], com.parameters[3]);
 
 	Main_Data::game_player->TriggerEventAt(x, y);
+	return true;
+}
+
+/*
+* Change parameters for mouse control events
+*/
+
+bool Game_Interpreter_Map::CommandSetMouseMoveSprite(lcf::rpg::EventCommand const&  com) {
+
+	if (com.parameters.size() > 0)
+		Input::MouseShowEventID = com.parameters[0];
+	if (com.parameters.size() > 1)
+		Input::MouseHideEventID = com.parameters[1];
+	if (com.parameters.size() > 2)
+		Input::MouseVarX = com.parameters[2];
+	if (com.parameters.size() > 3)
+		Input::MouseVarY = com.parameters[3];
+	if (com.parameters.size() > 4)
+		Input::MouseSwitchID = com.parameters[4];
 
 	return true;
 }

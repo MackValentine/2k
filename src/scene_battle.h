@@ -38,7 +38,7 @@
 #include "window_battlestatus.h"
 #include "window_message.h"
 #include "game_battle.h"
-
+#include "window_target.h"
 
 namespace CustomCheckSkill {
 	extern bool used;
@@ -192,7 +192,7 @@ protected:
 	/** Displays Fight, Autobattle, Flee */
 	std::unique_ptr<Window_Command> options_window;
 	/** Displays list of enemies */
-	std::unique_ptr<Window_Command> target_window;
+	std::unique_ptr<Window_Target> target_window;
 	/** Displays Attack, Defense, Magic, Item */
 	std::unique_ptr<Window_Command> command_window;
 	std::unique_ptr<Window_Item> item_window;
