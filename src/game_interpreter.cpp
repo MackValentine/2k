@@ -5200,6 +5200,9 @@ bool Game_Interpreter::CommandGetSkillMPCost(lcf::rpg::EventCommand const& com) 
 	}
 
 	int mpCost = skill->sp_cost;
+	if (com.parameters.size() > 4)
+		if (com.parameters[4] == 1)
+			mpCost = skill->sp_percent;
 	// Output::Debug("CommandGetSkillMPCost {} {} {}", skillID, result, mpCost);
 
 	Main_Data::game_variables->Set(result, mpCost);
