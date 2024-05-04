@@ -68,6 +68,7 @@
 #include "baseui.h"
 #include "algo.h"
 #include "rand.h"
+#include "scene_battle.h"
 
 enum BranchSubcommand {
 	eOptionBranchElse = 1
@@ -828,6 +829,10 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacCallCommand(com);
 		case 9997:
 			return SetBattlerPosition(com);
+		case 9996:
+			return CommandSetCustomIsSkillUsable(com);
+		case 9995:
+			return CommandGetSkillMPCost(com);
 		default:
 			return true;
 	}
@@ -5184,6 +5189,42 @@ bool Game_Interpreter::SetBattlerPosition(lcf::rpg::EventCommand const& com) {
 	else
 		Output::Warning("Invalid actor ID {}", actorID);
 
+bool Game_Interpreter::CommandSetCustomIsSkillUsable(lcf::rpg::EventCommand const& com) {
+
+	int eventID = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int result = ValueOrVariable(com.parameters[2], com.parameters[3]);
+	int actorID = ValueOrVariable(com.parameters[4], com.parameters[5]);
+	int skillID = ValueOrVariable(com.parameters[6], com.parameters[7]);
+
+	CustomCheckSkill::eventID = eventID;
+	CustomCheckSkill::actorID = actorID;
+	CustomCheckSkill::skillID = skillID;
+	CustomCheckSkill::result = result;
+	CustomCheckSkill::used = true;
+
+	// Output::Debug("CustomSkillUsable {} {} {} {}", eventID, actorID, skillID, result);
+
+	return true;
+}
+
+bool Game_Interpreter::CommandGetSkillMPCost(lcf::rpg::EventCommand const& com) {
+
+	int skillID = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int result = ValueOrVariable(com.parameters[2], com.parameters[3]);
+
+
+
+	const lcf::rpg::Skill* skill = lcf::ReaderUtil::GetElement(lcf::Data::skills, skillID);
+
+	if (!skill) {
+		Output::Warning("IsSkillUsable: Invalid skill ID {}", skillID);
+		return true;
+	}
+
+	int mpCost = skill->sp_cost;
+	// Output::Debug("CommandGetSkillMPCost {} {} {}", skillID, result, mpCost);
+
+	Main_Data::game_variables->Set(result, mpCost);
 
 	return true;
 }

@@ -290,6 +290,8 @@ protected:
 	bool CommandManiacControlStrings(lcf::rpg::EventCommand const& com);
 	bool CommandManiacCallCommand(lcf::rpg::EventCommand const& com);
 	bool SetBattlerPosition(lcf::rpg::EventCommand const& com);
+	bool CommandSetCustomIsSkillUsable(lcf::rpg::EventCommand const& com);
+	bool CommandGetSkillMPCost(lcf::rpg::EventCommand const& com);
 
 	int DecodeInt(lcf::DBArray<int32_t>::const_iterator& it);
 	const std::string DecodeString(lcf::DBArray<int32_t>::const_iterator& it);

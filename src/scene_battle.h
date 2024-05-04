@@ -39,6 +39,16 @@
 #include "window_message.h"
 #include "game_battle.h"
 
+
+namespace CustomCheckSkill {
+	extern bool used;
+
+	extern int eventID;
+	extern int actorID;
+	extern int skillID;
+	extern int result;
+}
+
 namespace AutoBattle {
 class AlgorithmBase;
 }
