@@ -314,3 +314,31 @@ void Spriteset_Map::CalculatePanoramaRenderOffset() {
 		}
 	}
 }
+
+void Spriteset_Map::ChangeTile(int layer, int x, int y, int new_id) {
+
+	auto t = tilemap->GetMapDataDown();
+	if (layer == 1)
+		t = tilemap->GetMapDataUp();
+
+	int i = x + y * Game_Map::GetTilesX();
+
+	//Output::Debug("S : {}/{}", i, t.size());
+
+	if (i <= t.size()) {
+
+		if (layer == 0)
+			t[i] = 5048 - 48 + (new_id)-18;
+		else
+			t[i] = new_id + 10000;
+
+		if (layer == 0)
+			tilemap->SetMapDataDown(t);
+		else
+			tilemap->SetMapDataUp(t);
+
+		Game_Map::ChangeTile(layer, x, y, new_id);
+		Game_Map::SetNeedRefresh(true);
+	}
+
+}

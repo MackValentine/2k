@@ -116,7 +116,7 @@ void Sprite_Picture::Draw(Bitmap& dst) {
 	SetZoomX(data.current_magnify / 100.0);
 	SetZoomY(data.current_magnify / 100.0);
 	if (Player::IsPatchManiac()) {
-		SetZoomY(data.maniac_current_magnify_height / 100.0);
+		//SetZoomY(data.maniac_current_magnify_height / 100.0);
 	}
 
 	auto sr = GetSrcRect();

@@ -71,6 +71,12 @@ public:
 	 */
 	void SubstituteUp(int old_id, int new_id);
 
+
+	/**
+	* Change tile at position X/Y
+	*/
+	void ChangeTile(int layer, int x, int y, int new_id);
+
 	/**
 	 * @return true if we should clear the screen before drawing the map
 	 */
