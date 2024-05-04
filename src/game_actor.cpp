@@ -903,6 +903,8 @@ const lcf::rpg::Skill* Game_Actor::GetRandomSkill() const {
 }
 
 Point Game_Actor::GetOriginalPosition() const {
+	if (fOriginalX != -999 || fOriginalY != -999)
+		return Point(fOriginalX , fOriginalY);
 	return { dbActor->battle_x, dbActor->battle_y };
 }
 
@@ -1568,4 +1570,9 @@ void Game_Actor::UpdateBattle() {
 	if (weapon) {
 		weapon->Update();
 	}
+}
+
+void Game_Actor::SetOriginalPosition(int fx, int fy) {
+	fOriginalX = fx;
+	fOriginalY = fy;
 }

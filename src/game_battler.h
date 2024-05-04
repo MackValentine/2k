@@ -927,6 +927,9 @@ public:
 	/** @return inflicted states as state objects ordered by priority */
 	const std::vector<lcf::rpg::State*> GetInflictedStatesOrderedByPriority() const;
 
+	/** Lock the direction of battler */
+	void SetLockDirection(bool b);
+
 protected:
 	/** Gauge for RPG2k3 Battle */
 	int gauge = 0;
@@ -970,6 +973,9 @@ protected:
 		double current_level = 0.0;
 	};
 	FlashData flash;
+
+	bool lockDirection = false;
+	
 };
 
 inline Color Game_Battler::GetFlashColor() const {
@@ -1147,7 +1153,8 @@ inline bool Game_Battler::IsDirectionFlipped() const {
 }
 
 inline void Game_Battler::SetDirectionFlipped(bool flip) {
-	direction_flipped = flip;
+	if (!lockDirection)
+		direction_flipped = flip;
 }
 
 inline int Game_Battler::GetBattleFrameCounter() const {
