@@ -58,6 +58,9 @@ public:
 
 	bool IsForceFleeEnabled() const;
 
+	Game_CommonEvent* StartCommonEvent(int i);
+	void PushCommonEvent(Game_CommonEvent* ev);
+
 	bool ExecuteCommand(lcf::rpg::EventCommand const& com) override;
 
 private:

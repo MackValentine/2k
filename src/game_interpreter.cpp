@@ -69,6 +69,7 @@
 #include "algo.h"
 #include "rand.h"
 #include "scene_battle.h"
+#include "game_maniacs.h"
 
 enum BranchSubcommand {
 	eOptionBranchElse = 1
@@ -833,6 +834,8 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandSetCustomIsSkillUsable(com);
 		case 9995:
 			return CommandGetSkillMPCost(com);
+		case 9994:
+			return CommandForceSelectingActor(com);
 		default:
 			return true;
 	}
@@ -5395,4 +5398,18 @@ void Game_Interpreter::tokenizeRegex(std::string const& str, const char delim, s
 	//	std::cout << partie << std::endl;
 	//}
 	out = parties;
+}
+
+bool Game_Interpreter::CommandForceSelectingActor(lcf::rpg::EventCommand const& com) {
+	if (!Player::IsPatchManiac()) {
+		return true;
+	}
+	if (com.parameters[0] == 1)
+		ManiacsBattle::SetForceSelectingActor(true);
+	else
+		ManiacsBattle::SetForceSelectingActor(false);
+
+	Output::Debug("Force selecting actor : {}", com.parameters[0]);
+
+	return true;
 }

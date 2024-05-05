@@ -54,6 +54,8 @@ public:
 	 */
 	AsyncOp Update(bool resume_async);
 
+	AsyncOp Game_CommonEvent::UpdateBattle(bool resume_async, int ce_ID);
+
 	/**
 	 * Force updates common event parallel interpreter.
 	 *
@@ -114,6 +116,13 @@ public:
 	 * @return true if waiting for background execution
 	 */
 	bool IsWaitingBackgroundExecution(bool force_run) const;
+
+	/**
+	 * Force creation of Common Event
+	 *
+	 * @param ce_ID Common Event ID
+	 */
+	void ForceCreate(int ce_ID);
 
 private:
 	int common_event_id;
