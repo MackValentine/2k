@@ -1311,7 +1311,7 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionAc
 		}
 
 		if (status_window->GetActive() && status_window->GetIndex() >= 0) {
-			if (Input::IsTriggered(Input::DECISION)) {
+			if (Input::IsTriggered(Input::DECISION) || ManiacsBattle::GetForceSelectingActor()) {
 				command_window->SetIndex(0);
 				SetState(State_SelectCommand);
 				return SceneActionReturn::eWaitTillNextFrame;
@@ -1459,7 +1459,8 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionCo
 			return SceneActionReturn::eWaitTillNextFrame;
 		}
 		if (lcf::Data::battlecommands.battle_type != lcf::rpg::BattleCommands::BattleType_traditional) {
-			if (Input::IsTriggered(Input::CANCEL)) {
+			if (Input::IsTriggered(Input::CANCEL) && !ManiacsBattle::GetForceSelectingActor()) {
+
 				Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cancel));
 				SetState(State_SelectOption);
 

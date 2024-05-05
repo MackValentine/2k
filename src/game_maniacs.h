@@ -39,4 +39,7 @@ namespace ManiacsBattle
 	bool GetUpdateEventWhileAnimation();
 	void SetUpdateEventWhileAnimation(bool b);
 
+	bool GetForceSelectingActor();
+	void SetForceSelectingActor(bool b);
+
 }

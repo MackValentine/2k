@@ -103,4 +103,12 @@ namespace ManiacsBattle
 		return UpdateEventWhileAnimation;
 	}
 
+	bool forceSelectingActor = false;
+	void SetForceSelectingActor(bool b) {
+		forceSelectingActor = b;
+	}
+	bool GetForceSelectingActor() {
+		return forceSelectingActor;
+	}
+
 }
