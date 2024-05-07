@@ -740,3 +740,28 @@ void Scene_Battle::reset_easyrpg_battle_options(std::vector<int16_t> cmds) {
 
 	options_window->ReplaceCommands(commands);
 }
+
+int Scene_Battle::GetTargetIndex() {
+	int v = -1;
+
+	if (this->status_window) {
+		if (status_window->GetActive())
+		{
+			auto a = Main_Data::game_party->GetActor(status_window->GetIndex());
+			v = Main_Data::game_party->GetActorPositionInParty(a->GetId());
+		}
+	}
+	if (target_window) {
+		if (target_window->GetActive()) {
+			std::vector<Game_Battler*> battlers;
+			Main_Data::game_enemyparty->GetActiveBattlers(battlers);
+			auto idx = target_window->GetIndex();
+			if (idx >= 0) {
+				Game_Enemy* enemy = (Game_Enemy*) battlers[idx];
+				v = 100 + Main_Data::game_enemyparty->GetEnemyPositionInParty(enemy);
+			}
+		}
+	}
+
+	return v;
+}

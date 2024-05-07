@@ -153,6 +153,8 @@ public:
 	Window_Command* GetOptionsWindow();
 	void Scene_Battle::reset_easyrpg_battle_options(std::vector<int16_t> cmds);
 
+	int GetTargetIndex();
+
 protected:
 	explicit Scene_Battle(const BattleArgs& args);
 
