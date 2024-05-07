@@ -33,6 +33,7 @@
 #include <cassert>
 #include <scene_battle.h>
 #include <game_maniacs.h>
+#include <scene_battle_rpg2k3.h>
 
 enum BranchBattleSubcommand {
 	eOptionBranchBattleElse = 1
@@ -218,6 +219,8 @@ bool Game_Interpreter_Battle::ExecuteCommand(lcf::rpg::EventCommand const& com) 
 			return CommandManiacChangeBattleCommandEx(com);
 		case Cmd::Maniac_GetBattleInfo:
 			return CommandManiacGetBattleInfo(com);
+		case 9993:
+			return CommandGetTarget(com);
 		default:
 			return Game_Interpreter::ExecuteCommand(com);
 	}
@@ -1005,4 +1008,19 @@ Game_CommonEvent* Game_Interpreter_Battle::StartCommonEvent(int i) {
 void Game_Interpreter_Battle::PushCommonEvent(Game_CommonEvent* ev) {
 	Push(ev->GetList(), -ev->GetIndex(), false);
 	//Push(ev->GetList(), 0, false);
+}
+
+bool Game_Interpreter_Battle::CommandGetTarget(lcf::rpg::EventCommand const& com) {
+	if (!Player::IsPatchManiac()) {
+		return true;
+	}
+	int varID = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int value = -1;
+
+	Scene_Battle_Rpg2k3* scene = (Scene_Battle_Rpg2k3*)Scene::Find(Scene::Battle).get();
+	value = scene->GetTargetIndex();
+
+	Main_Data::game_variables->Set(varID, value);
+
+	return true;
 }
