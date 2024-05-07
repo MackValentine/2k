@@ -1246,7 +1246,7 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionAc
 		status_window->SetVisible(true);
 		command_window->SetIndex(-1);
 
-		if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_traditional) {
+		if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_traditional || ManiacsBattle::GetForceSelectingActor()) {
 			status_window->SetChoiceMode(Window_BattleStatus::ChoiceMode_None);
 			target_window->SetVisible(true);
 
@@ -1290,7 +1290,7 @@ Scene_Battle_Rpg2k3::SceneActionReturn Scene_Battle_Rpg2k3::ProcessSceneActionAc
 	}
 
 	if (scene_action_substate == eWaitActor) {
-		if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_traditional) {
+		if (lcf::Data::battlecommands.battle_type == lcf::rpg::BattleCommands::BattleType_traditional || ManiacsBattle::GetForceSelectingActor()) {
 			UpdateReadyActors();
 			SetActiveActor(GetNextReadyActor());
 		}
