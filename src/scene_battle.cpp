@@ -651,8 +651,10 @@ int Scene_Battle::GetTargetIndex() {
 	if (this->status_window) {
 		if (status_window->GetActive())
 		{
-			auto a = Main_Data::game_party->GetActor(status_window->GetIndex());
-			v = Main_Data::game_party->GetActorPositionInParty(a->GetId());
+			if (status_window->GetIndex() >= 0) {
+				auto a = Main_Data::game_party->GetActor(status_window->GetIndex());
+				v = Main_Data::game_party->GetActorPositionInParty(a->GetId());
+			}
 		}
 	}
 	if (target_window) {
