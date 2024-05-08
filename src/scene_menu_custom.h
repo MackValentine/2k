@@ -82,6 +82,10 @@ namespace CustomMenu {
 
 	extern bool used;
 
+	extern std::string commands[16];
+
+	extern bool customCommands;
+
 }
 /**
  * Scene Menu class.

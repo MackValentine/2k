@@ -682,7 +682,6 @@ bool Game_Interpreter_Map::CommandToggleAtbMode(lcf::rpg::EventCommand const& /*
 bool Game_Interpreter_Map::CommandSetCustomBattleHUD(lcf::rpg::EventCommand const& com) {
 
 	CustomBattle::used = true;
-	Output::Debug("Battle");
 
 	std::string s = com.string.c_str();
 	char delim = '\n';
@@ -853,7 +852,6 @@ bool Game_Interpreter_Map::CommandSetCustomBattleHUD(lcf::rpg::EventCommand cons
 					// Output::Debug("Window Status");
 
 					w.itemHeight = atoi(params[7].c_str());
-					Output::Debug("{}", w.itemHeight);
 
 					if (params.size() > 8) {
 						std::regex pattern("\\{([^{}]*)\\}");
@@ -902,8 +900,6 @@ bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& co
 	if (battle) {
 		return CommandSetCustomBattleHUD(com);
 	}
-
-	Output::Debug("Menu");
 
 	CustomMenu::used = true;
 
@@ -1084,7 +1080,64 @@ bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& co
 						}
 					}
 				}
+				else if (name == "Commands") {
 
+					CustomMenu::customCommands = false;
+
+					// Output::Debug("Window Status");
+					if (params.size() > 7)
+						w.itemHeight = atoi(params[7].c_str());
+
+					if (params.size() > 8) {
+
+						CustomMenu::customCommands = true;
+
+						std::regex pattern("\\{([^{}]*)\\}");
+
+						// Iterator pour parcourir les correspondances
+						std::sregex_iterator it(params[8].begin(), params[8].end(), pattern);
+						std::sregex_iterator end;
+
+						lcf::Data::system.menu_commands.clear();
+						while (it != end)
+						{
+							auto s = it->str(1);
+							delim = ';';
+							std::vector<std::string> strPos;
+							tokenize(s, delim, strPos);
+
+							int id = 0;
+							for (auto ss : strPos) {
+
+								if (ss[0] == '[') {
+
+									delim = '|';
+									std::vector<std::string> strCom;
+									tokenize(ss, delim, strCom);
+
+									auto sss = strCom[0];
+									sss.replace(0, 1, "");
+									int i = atoi(sss.c_str());
+									lcf::Data::system.menu_commands.push_back(i);
+
+									if (strCom.size() > 1) {
+										std::string txt = strCom[1].c_str();
+										txt.replace(txt.end() - 1, txt.end(), "");
+
+										CustomMenu::commands[id] = txt;
+									}
+									
+								} else {
+									int i = atoi(ss.c_str());
+									lcf::Data::system.menu_commands.push_back(i);
+								}
+								id++;
+							}
+
+							it++;
+						}
+					}
+				}
 			}
 
 			 // Output::Debug("{} {} {} {} {} {}", w.x, w.y, w.w, w.h, w.hide, w.column);

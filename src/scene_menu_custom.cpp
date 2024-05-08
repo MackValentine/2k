@@ -38,6 +38,8 @@
 #include <output.h>
 #include <window_custom.h>
 #include <window_command_custom.h>
+#include "game_switches.h"
+#include "game_map.h"
 
 constexpr int menu_command_width = 88;
 constexpr int gold_window_width = 88;
@@ -55,6 +57,10 @@ namespace CustomMenu {
 	int parallax_y = 0;
 
 	bool used = false;
+
+	bool customCommands = false;
+
+	std::string commands[16] = {""};
 }
 
 Scene_Menu_Custom::Scene_Menu_Custom(int menu_index) :
@@ -80,8 +86,6 @@ void Scene_Menu_Custom::Start() {
 
 	// Gold Window
 	gold_window.reset(new Window_Gold(Player::menu_offset_x, (Player::screen_height - gold_window_height - Player::menu_offset_y), gold_window_width, gold_window_height));
-
-	Output::Debug("CustomMenu");
 
 	std::string win_name = "Gold";
 	auto it2 = CustomMenu::customWindows.find(win_name);
@@ -245,21 +249,23 @@ void Scene_Menu_Custom::CreateCommandWindow() {
 	// Create Options Window
 	std::vector<std::string> options;
 
-	if (Player::IsRPG2k()) {
-		command_options.push_back(Item);
-		command_options.push_back(Skill);
-		command_options.push_back(Equipment);
-		command_options.push_back(Save);
-		if (Player::player_config.settings_in_menu.Get()) {
-			command_options.push_back(Settings);
+	if (!CustomMenu::customCommands) {
+		if (Player::IsRPG2k()) {
+			command_options.push_back(Item);
+			command_options.push_back(Skill);
+			command_options.push_back(Equipment);
+			command_options.push_back(Save);
+			if (Player::player_config.settings_in_menu.Get()) {
+				command_options.push_back(Settings);
+			}
+			if (Player::debug_flag) {
+				command_options.push_back(Debug);
+			}
+			command_options.push_back(Quit);
 		}
-		if (Player::debug_flag) {
-			command_options.push_back(Debug);
-		}
-		command_options.push_back(Quit);
-	} else {
-		for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
-			it != lcf::Data::system.menu_commands.end(); ++it) {
+		else {
+			for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
+				it != lcf::Data::system.menu_commands.end(); ++it) {
 				switch (*it) {
 				case Row:
 					if (Feature::HasRow()) {
@@ -275,17 +281,27 @@ void Scene_Menu_Custom::CreateCommandWindow() {
 					command_options.push_back((CommandOptionType)*it);
 					break;
 				}
+			}
+			if (Player::player_config.settings_in_menu.Get()) {
+				command_options.push_back(Settings);
+			}
+			if (Player::debug_flag) {
+				command_options.push_back(Debug);
+			}
+			command_options.push_back(Quit);
 		}
-		if (Player::player_config.settings_in_menu.Get()) {
-			command_options.push_back(Settings);
+	}
+	else {
+		for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
+			it != lcf::Data::system.menu_commands.end(); ++it) {
+
+			command_options.push_back((CommandOptionType)*it);
+
 		}
-		if (Player::debug_flag) {
-			command_options.push_back(Debug);
-		}
-		command_options.push_back(Quit);
 	}
 
 	// Add all menu items
+	int i = 0;
 	std::vector<CommandOptionType>::iterator it;
 	for (it = command_options.begin(); it != command_options.end(); ++it) {
 		switch(*it) {
@@ -320,9 +336,16 @@ void Scene_Menu_Custom::CreateCommandWindow() {
 			options.push_back("Debug");
 			break;
 		default:
-			options.push_back(ToString(lcf::Data::terms.menu_quit));
+			int d = *it;
+			if (d > 0) {
+				options.push_back(ToString(lcf::Data::terms.menu_quit));
+			}
+			else {
+				options.push_back(CustomMenu::commands[i]);
+			}
 			break;
 		}
+		i++;
 	}
 	std::string win_name = "Commands";
 	auto it2 = CustomMenu::customWindows.find(win_name);
@@ -379,62 +402,74 @@ void Scene_Menu_Custom::UpdateCommand() {
 	} else if (Input::IsTriggered(Input::DECISION)) {
 		menu_index = command_window->GetIndex();
 		if (menu_index >= 0 && menu_index < command_options.size())
-			switch (command_options[menu_index]) {
-			case Item:
-				if (Main_Data::game_party->GetActors().empty()) {
-					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
-				} else {
+			if (command_options[menu_index] >= 0) {
+				switch (command_options[menu_index]) {
+				case Item:
+					if (Main_Data::game_party->GetActors().empty()) {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
+					}
+					else {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
+						Scene::Push(std::make_shared<Scene_Item>());
+					}
+					break;
+				case Skill:
+				case Equipment:
+				case Status:
+				case Row:
+					if (Main_Data::game_party->GetActors().empty()) {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
+					}
+					else {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
+						command_window->SetActive(false);
+						menustatus_window->SetActive(true);
+						menustatus_window->SetIndex(0);
+					}
+					break;
+				case Save:
+					if (!Main_Data::game_system->GetAllowSave()) {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
+					}
+					else {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
+						Scene::Push(std::make_shared<Scene_Save>());
+					}
+					break;
+				case Order:
+					if (Main_Data::game_party->GetActors().size() <= 1) {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
+					}
+					else {
+						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
+						Scene::Push(std::make_shared<Scene_Order>());
+					}
+					break;
+				case Wait:
 					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-					Scene::Push(std::make_shared<Scene_Item>());
-				}
-				break;
-			case Skill:
-			case Equipment:
-			case Status:
-			case Row:
-				if (Main_Data::game_party->GetActors().empty()) {
-					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
-				} else {
+					Main_Data::game_system->ToggleAtbMode();
+					command_window->SetItemText(menu_index,
+						Main_Data::game_system->GetAtbMode() == lcf::rpg::SaveSystem::AtbMode_atb_wait ? lcf::Data::terms.wait_on : lcf::Data::terms.wait_off);
+					break;
+				case Settings:
+					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Game_System::SFX_Decision));
+					Scene::Push(std::make_shared<Scene_Settings>());
+					break;
+				case Debug:
 					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-					command_window->SetActive(false);
-					menustatus_window->SetActive(true);
-					menustatus_window->SetIndex(0);
-				}
-				break;
-			case Save:
-				if (!Main_Data::game_system->GetAllowSave()) {
-					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
-				} else {
+					Scene::Push(std::make_shared<Scene_Debug>());
+					break;
+				case Quit:
 					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-					Scene::Push(std::make_shared<Scene_Save>());
+					Scene::Push(std::make_shared<Scene_End>());
+					break;
 				}
-				break;
-			case Order:
-				if (Main_Data::game_party->GetActors().size() <= 1) {
-					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
-				} else {
-					Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-					Scene::Push(std::make_shared<Scene_Order>());
-				}
-				break;
-			case Wait:
+			}
+			else {
 				Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-				Main_Data::game_system->ToggleAtbMode();
-				command_window->SetItemText(menu_index,
-					Main_Data::game_system->GetAtbMode() == lcf::rpg::SaveSystem::AtbMode_atb_wait ? lcf::Data::terms.wait_on : lcf::Data::terms.wait_off);
-				break;
-			case Settings:
-				Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Game_System::SFX_Decision));
-				Scene::Push(std::make_shared<Scene_Settings>());
-				break;
-			case Debug:
-				Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-				Scene::Push(std::make_shared<Scene_Debug>());
-				break;
-			case Quit:
-				Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-				Scene::Push(std::make_shared<Scene_End>());
-				break;
+				Main_Data::game_switches->Set(-command_options[menu_index], true);
+				Game_Map::SetNeedRefresh(true);
+				Scene::Pop();
 			}
 	}
 }

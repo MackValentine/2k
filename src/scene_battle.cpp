@@ -240,7 +240,6 @@ void Scene_Battle::CreateUi() {
 
 	if (CustomBattle::used) {
 
-		Output::Debug("CustomBattle");
 		std::string win_name = "Options";
 
 		auto it2 = CustomBattle::customWindows.find(win_name);
@@ -258,7 +257,6 @@ void Scene_Battle::CreateUi() {
 
 			options_window->Refresh();
 
-			Output::Debug("Options");
 		}
 
 		win_name = "Items";
