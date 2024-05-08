@@ -84,6 +84,7 @@ private:
 
 	bool CommandSetCustomMenu(lcf::rpg::EventCommand const& com);
 	bool CommandSetCustomBattleHUD(lcf::rpg::EventCommand const& com);
+	bool CommandSetCustomItem(lcf::rpg::EventCommand const& com);
 
 	AsyncOp ContinuationShowInnStart(int indent, int choice_result, int price);
 

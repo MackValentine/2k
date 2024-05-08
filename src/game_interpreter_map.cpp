@@ -54,6 +54,7 @@
 #include "game_interpreter_map.h"
 #include <lcf/reader_lcf.h>
 #include <scene_menu_custom.h>
+#include <scene_item_custom.h>
 #include <regex>
 
 enum EnemyEncounterSubcommand {
@@ -892,13 +893,196 @@ bool Game_Interpreter_Map::CommandSetCustomBattleHUD(lcf::rpg::EventCommand cons
 
 	return true;
 }
+
+bool Game_Interpreter_Map::CommandSetCustomItem(lcf::rpg::EventCommand const& com) {
+
+	CustomBattle::used = true;
+
+	std::string s = com.string.c_str();
+	char delim = '\n';
+
+	std::vector<std::string> lines;
+	tokenize(s, delim, lines);
+
+	int nline = 0;
+
+	CustomItem::pockets_list.clear();
+
+	for (std::string line : lines) {
+		//Output::Debug(line);
+		if (nline == 0) {
+
+			delim = ',';
+			std::vector<std::string> str;
+			tokenize(line, delim, str);
+
+			transform(str[0].begin(), str[0].end(), str[0].begin(), ::tolower);
+
+			CustomItem::showMap = str[0] == "true";
+			if (str.size() > 1) {
+				str[1].replace(0, 2, "");
+				str[1].replace(str[1].end() - 1, str[1].end(), "");
+				CustomItem::backName = str[1];
+			}
+			if (str.size() > 2) {
+				CustomItem::parallax_x = atoi(str[2].c_str());
+			}
+			if (str.size() > 3) {
+				CustomItem::parallax_y = atoi(str[3].c_str());
+			}
+		}
+		else {
+
+			MenuCustomWindow w;
+
+			// Get name, and params
+			delim = ':';
+			std::vector<std::string> str;
+			tokenize(line, delim, str);
+			std::string name = str[0];
+			std::string param = "";
+
+			// Output::Debug("{}", name);
+
+			// This remove ':'.
+			// Have to find a better solution
+			for (int i = 1; i < str.size(); i++) {
+				param += str[i];
+			}
+
+			delim = ',';
+			std::vector<std::string> params;
+			tokenizeRegex(param, delim, params);
+
+			w.x = atoi(params[0].c_str());
+			w.y = atoi(params[1].c_str());
+			w.w = atoi(params[2].c_str());
+			w.h = atoi(params[3].c_str());
+
+			w.column = atoi(params[4].c_str());
+			if (w.column == 0)
+				w.column = 1;
+
+			w.opacity = atoi(params[5].c_str());
+			if (w.opacity == 0)
+				w.opacity = 1;
+
+
+			transform(params[6].begin(), params[6].end(), params[6].begin(), ::tolower);
+			w.hide = (params[6] == "true");
+
+
+			if (params.size() > 7) {
+				// Todo rework all this part to include Pages
+				//s = params[6];
+
+				if (name != "Items" && name != "Help" && name != "Pockets") {
+					for (int i = 7; i < params.size(); i++) {
+
+						// Output::Debug("Page {}", params[i]);
+
+						std::regex pattern("\\{([^{}]*)\\}");
+
+						// Iterator pour parcourir les correspondances
+						std::sregex_iterator it(params[i].begin(), params[i].end(), pattern);
+						std::sregex_iterator end;
+
+						int condition;
+						s = it->str(1);
+						condition = atoi(s.c_str());
+						// Output::Debug("Cond {}", condition);
+
+						int align = 0;
+						it++;
+						s = it->str(1);
+						transform(s.begin(), s.end(), s.begin(), ::tolower);
+						if (s == "middle")
+							align = 1;
+						else if (s == "right")
+							align = 2;
+						// Output::Debug("Align {}", align);
+
+						std::string text;
+						it++;
+						s = it->str(1);
+						s.replace(0, 1, "");
+						s.replace(s.end() - 1, s.end(), "");
+						text = s;
+						// Output::Debug("Text {}", text);
+
+
+						MenuCustomWindowPage p;
+						p.align = align;
+						p.condition = condition;
+						p.text = text;
+
+						w.pages.push_back(p);
+
+					}
+				}
+				else if (name == "Items") {
+
+					// Output::Debug("Window Status");
+
+					w.itemHeight = atoi(params[7].c_str());
+
+				}
+				else if (name == "Pockets") {
+
+					// Output::Debug("Window Status");
+
+					if (params.size() > 7)
+						w.itemHeight = atoi(params[7].c_str());
+					
+
+					if (params.size() > 8) {
+
+						CustomItem::pockets_list.clear();
+						std::regex pattern("\\{([^{}]*)\\}");
+
+						// Iterator pour parcourir les correspondances
+						std::sregex_iterator it(params[8].begin(), params[8].end(), pattern);
+						std::sregex_iterator end;
+
+						while (it != end)
+						{
+							auto s = it->str(1);
+							delim = ';';
+							std::vector<std::string> strPos;
+							tokenize(s, delim, strPos);
+
+							int id = 0;
+							for (auto ss : strPos) {
+								id = atoi(ss.c_str());
+								CustomItem::pockets_list.push_back(id);
+							}
+							it++;
+						}
+					}
+				}
+			}
+
+			// Output::Debug("{} {} {} {} {} {}", w.x, w.y, w.w, w.h, w.hide, w.column);
+
+			w.name = name;
+			CustomItem::customWindows[name] = w;
+
+		}
+
+		nline++;
+	}
+
+
+	return true;
+}
+
 bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& com) {
 
-	bool battle = false;
-	if (com.parameters.size() > 0)
-		battle = com.parameters[0] == 1;
-	if (battle) {
+
+	if (com.parameters[0] == 1) {
 		return CommandSetCustomBattleHUD(com);
+	} else 	if (com.parameters[0] == 2) {
+		return CommandSetCustomItem(com);
 	}
 
 	CustomMenu::used = true;
@@ -1131,6 +1315,7 @@ bool Game_Interpreter_Map::CommandSetCustomMenu(lcf::rpg::EventCommand const& co
 									int i = atoi(ss.c_str());
 									lcf::Data::system.menu_commands.push_back(i);
 								}
+
 								id++;
 							}
 

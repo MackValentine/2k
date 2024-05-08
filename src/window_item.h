@@ -58,7 +58,7 @@ public:
 	/**
 	 * Refreshes the item list.
 	 */
-	void Refresh();
+	virtual void Refresh();
 
 	/**
 	 * Draws an item together with the quantity.
@@ -78,10 +78,15 @@ public:
 	 */
 	void SetActor(Game_Actor* actor);
 
-private:
+	Game_Actor* GetActor();
+	std::vector<int> GetData();
+
 	std::vector<int> data;
 
 	Game_Actor* actor = nullptr;
+
+	void SetPocket(int i);
+	int pocket = -1;
 };
 
 #endif

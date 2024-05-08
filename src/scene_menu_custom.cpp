@@ -40,6 +40,7 @@
 #include <window_command_custom.h>
 #include "game_switches.h"
 #include "game_map.h"
+#include "scene_item_custom.h"
 
 constexpr int menu_command_width = 88;
 constexpr int gold_window_width = 88;
@@ -144,17 +145,17 @@ void Scene_Menu_Custom::Start() {
 		Main_Data::game_pictures->Update(false);
 	}
 
-	CreateTitleGraphic();
+	CreateBackGraphic();
 
 }
 
-void Scene_Menu_Custom::CreateTitleGraphic() {
+void Scene_Menu_Custom::CreateBackGraphic() {
 	// Load Title Graphic
 	if (!CustomMenu::backName.empty()) {
 		backSprite.reset(new Plane());
 		FileRequestAsync* request = AsyncHandler::RequestFile("Picture", CustomMenu::backName);
 		request->SetGraphicFile(true);
-		request_id = request->Bind(&Scene_Menu_Custom::OnTitleSpriteReady, this);
+		request_id = request->Bind(&Scene_Menu_Custom::OnBackSpriteReady, this);
 		request->Start();
 	}
 	else {
@@ -170,7 +171,7 @@ void Scene_Menu_Custom::OnSystem2Ready(FileRequestResult* result) {
 	//SetupSystem2Graphics();
 }
 
-void Scene_Menu_Custom::OnTitleSpriteReady(FileRequestResult* result) {
+void Scene_Menu_Custom::OnBackSpriteReady(FileRequestResult* result) {
 	BitmapRef bitmapRef = Cache::Picture(result->file, true);
 
 	backSprite->SetBitmap(bitmapRef);
@@ -296,8 +297,9 @@ void Scene_Menu_Custom::CreateCommandWindow() {
 			it != lcf::Data::system.menu_commands.end(); ++it) {
 
 			command_options.push_back((CommandOptionType)*it);
-
 		}
+		if (command_options.size() == 0)
+			command_options.push_back(CommandOptionType::Item);
 	}
 
 	// Add all menu items
@@ -410,7 +412,7 @@ void Scene_Menu_Custom::UpdateCommand() {
 					}
 					else {
 						Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-						Scene::Push(std::make_shared<Scene_Item>());
+						Scene::Push(std::make_shared<Scene_Item_Custom>());
 					}
 					break;
 				case Skill:

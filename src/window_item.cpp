@@ -135,3 +135,14 @@ void Window_Item::UpdateHelp() {
 void Window_Item::SetActor(Game_Actor * actor) {
 	this->actor = actor;
 }
+
+Game_Actor* Window_Item::GetActor() {
+	return actor;
+}
+std::vector<int> Window_Item::GetData() {
+	return data;
+}
+
+void Window_Item::SetPocket(int i) {
+	pocket = i;
+}

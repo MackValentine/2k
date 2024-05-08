@@ -120,9 +120,9 @@ public:
 	void UpdateActorSelection();
 
 	/**
- * Creates the background graphic of the scene.
- */
-	void CreateTitleGraphic();
+	 * Creates the background graphic of the scene.
+	 */
+	void CreateBackGraphic();
 
 	/** Options available in a Rpg2k3 menu. */
 	enum CommandOptionType {
@@ -141,7 +141,7 @@ public:
 	};
 
 private:
-	void OnTitleSpriteReady(FileRequestResult* result);
+	void OnBackSpriteReady(FileRequestResult* result);
 
 	/** Selected index on startup. */
 	int menu_index;
