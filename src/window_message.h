@@ -148,7 +148,7 @@ protected:
 	/** Current number of lines on this page. */
 	int line_count = 0;
 	/** Maximum number of lines per page */
-	int max_lines_per_page = 4;
+	int max_lines_per_page = 9;
 	/** Index of the next char in text that will be output. */
 	const char* text_index = nullptr;
 	/** text message that will be displayed. */

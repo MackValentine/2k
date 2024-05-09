@@ -74,7 +74,13 @@ Scene_Map::~Scene_Map() {
 void Scene_Map::Start() {
 	Scene_Debug::ResetPrevIndices();
 	spriteset.reset(new Spriteset_Map());
-	message_window.reset(new Window_Message(Player::message_box_offset_x, Player::screen_height - MESSAGE_BOX_HEIGHT, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT));
+
+	int w = MESSAGE_BOX_WIDTH;
+	int h = MESSAGE_BOX_HEIGHT;
+
+	int y = Player::screen_height - h;
+
+	message_window.reset(new Window_Message(Player::message_box_offset_x, y, w, h));
 
 	Game_Message::SetWindow(message_window.get());
 
@@ -519,4 +525,19 @@ void Scene_Map::UpdateInn() {
 
 	Main_Data::game_system->BgmStop();
 	FinishInn();
+}
+
+int* Scene_Map::GetWindowMessage(){
+	int r[4];
+	r[0] = message_window->GetX();
+	r[1] = message_window->GetY();
+	r[2] = message_window->GetWidth();
+	r[3] = message_window->GetHeight();
+	return r;
+}
+void Scene_Map::Reset_MessageWindow(int x, int y, int w, int h) {
+
+	message_window.reset(new Window_Message(x, y, w, h));
+
+	Game_Message::SetWindow(message_window.get());
 }

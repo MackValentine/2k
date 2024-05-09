@@ -369,3 +369,10 @@ Game_Message::ParseParamResult Game_Message::ParseSpeed(const char* iter, const 
 Game_Message::ParseParamResult Game_Message::ParseActor(const char* iter, const char* end, uint32_t escape_char, bool skip_prefix, int max_recursion) {
 	return ParseParam('N', 'n', iter, end, escape_char, skip_prefix, max_recursion);
 }
+
+int Game_Message::GetMaxLine() {
+	if (window->GetHeight() == MESSAGE_BOX_HEIGHT)
+		return 4;
+	// return window->GetMaxLinesPerPage();
+	 return (window->GetHeight() - 16 ) / 16;
+}

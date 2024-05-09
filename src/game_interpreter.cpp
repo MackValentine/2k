@@ -826,6 +826,8 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacControlStrings(com);
 		case Cmd::Maniac_CallCommand:
 			return CommandManiacCallCommand(com);
+		case 3029:
+			return CommandManiacControlMessage(com);
 		default:
 			return true;
 	}
@@ -902,6 +904,68 @@ bool Game_Interpreter::CommandOptionGeneric(lcf::rpg::EventCommand const& com, i
 }
 
 bool Game_Interpreter::CommandShowMessage(lcf::rpg::EventCommand const& com) { // code 10110
+
+	/* Maniacs control message*/
+	int common_evt_id = Game_Message::commonEventID[2];
+	if (common_evt_id > 0) {
+		if (!Game_Message::FirstCall) {
+			Game_CommonEvent* common_event = lcf::ReaderUtil::GetElement(Game_Map::GetCommonEvents(), common_evt_id);
+			if (!common_event) {
+				Output::Warning("CallEvent: Can't call invalid common event {}", common_evt_id);
+			}
+			else {
+
+				int varID = Game_Message::systemVarID[2];
+
+				int x = 0;
+				int y = 0;
+				int w = 0;
+				int h = 0;
+
+				auto st = Scene::instance->type;
+				if (st == Scene::Map) {
+					Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+					auto r = scene->GetWindowMessage();
+					x = r[0];
+					y = r[1];
+					w = r[2];
+					h = r[3];
+				}
+
+				Main_Data::game_variables->Set(varID + 1, x);
+				Main_Data::game_variables->Set(varID + 2, y);
+				Main_Data::game_variables->Set(varID + 3, w);
+				Main_Data::game_variables->Set(varID + 4, h);
+
+				Push(common_event);
+
+				// Used for update the common event
+				Game_Message::FirstCall = true;
+				return false;
+			}
+		}
+		else {
+			// Disable the first call
+			Game_Message::FirstCall = false;
+
+			int varID = Game_Message::systemVarID[2];
+
+			int x = Main_Data::game_variables->Get(varID + 1);
+			int y = Main_Data::game_variables->Get(varID + 2);
+			int w = Main_Data::game_variables->Get(varID + 3);
+			int h = Main_Data::game_variables->Get(varID + 4);
+
+			auto st = Scene::instance->type;
+			if (st == Scene::Map) {
+				Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+				scene->Reset_MessageWindow(x, y, w, h);
+
+				Main_Data::game_system->SetMessagePosition(-1);
+			}
+
+		}
+	}
+
 	auto& frame = GetFrame();
 	const auto& list = frame.commands;
 	auto& index = frame.current_command;
@@ -925,13 +989,17 @@ bool Game_Interpreter::CommandShowMessage(lcf::rpg::EventCommand const& com) { /
 		++index;
 	}
 
+	int max_choice = 4;
+
+	max_choice = Game_Message::GetMaxLine();
+	
 	// Handle Choices or number
 	if (index < static_cast<int>(list.size())) {
 		// If next event command is show choices
 		if (static_cast<Cmd>(list[index].code) == Cmd::ShowChoice) {
-			std::vector<std::string> s_choices = GetChoices(4);
+			std::vector<std::string> s_choices = GetChoices(max_choice);
 			// If choices fit on screen
-			if (static_cast<int>(s_choices.size()) <= (4 - pm.NumLines())) {
+			if (static_cast<int>(s_choices.size()) <= (max_choice - pm.NumLines())) {
 				pm.SetChoiceCancelType(list[index].parameters[0]);
 				SetupChoices(s_choices, com.indent, pm);
 				++index;
@@ -939,7 +1007,7 @@ bool Game_Interpreter::CommandShowMessage(lcf::rpg::EventCommand const& com) { /
 		} else if (static_cast<Cmd>(list[index].code) == Cmd::InputNumber) {
 			// If next event command is input number
 			// If input number fits on screen
-			if (pm.NumLines() < 4) {
+			if (pm.NumLines() < max_choice) {
 				int digits = list[index].parameters[0];
 				int variable_id = list[index].parameters[1];
 				pm.PushNumInput(variable_id, digits);
@@ -966,6 +1034,15 @@ bool Game_Interpreter::CommandMessageOptions(lcf::rpg::EventCommand const& com) 
 
 	// TODO: Maniac Patch Message Box Size and Font not implemented
 	// see https://jetrotal.github.io/CSA/#Display%20Text%20Options
+	int w = com.parameters[5];
+	int h = com.parameters[6];
+	int x = Player::message_box_offset_x;
+	int y = Player::screen_height - MESSAGE_BOX_HEIGHT;
+	auto st = Scene::instance->type;
+	if (st == Scene::Map) {
+		Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+		scene->Reset_MessageWindow(x, y, w, h);
+	}
 
 	return true;
 }
@@ -986,7 +1063,7 @@ bool Game_Interpreter::CommandChangeFaceGraphic(lcf::rpg::EventCommand const& co
 void Game_Interpreter::SetupChoices(const std::vector<std::string>& choices, int indent, PendingMessage& pm) {
 	// Set choices to message text
 	pm.SetChoiceResetColors(false);
-	for (int i = 0; i < 4 && i < static_cast<int>(choices.size()); i++) {
+	for (int i = 0; i < Game_Message::GetMaxLine() && i < static_cast<int>(choices.size()); i++) {
 		pm.PushChoice(choices[i]);
 	}
 
@@ -1000,6 +1077,68 @@ void Game_Interpreter::SetupChoices(const std::vector<std::string>& choices, int
 }
 
 bool Game_Interpreter::CommandShowChoices(lcf::rpg::EventCommand const& com) { // code 10140
+
+	/* Maniacs control message*/
+	int common_evt_id = Game_Message::commonEventID[2];
+	if (common_evt_id > 0) {
+		if (!Game_Message::FirstCall) {
+			Game_CommonEvent* common_event = lcf::ReaderUtil::GetElement(Game_Map::GetCommonEvents(), common_evt_id);
+			if (!common_event) {
+				Output::Warning("CallEvent: Can't call invalid common event {}", common_evt_id);
+			}
+			else {
+
+				int varID = Game_Message::systemVarID[2];
+
+				int x = 0;
+				int y = 0;
+				int w = 0;
+				int h = 0;
+
+				auto st = Scene::instance->type;
+				if (st == Scene::Map) {
+					Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+					auto r = scene->GetWindowMessage();
+					x = r[0];
+					y = r[1];
+					w = r[2];
+					h = r[3];
+				}
+
+				Main_Data::game_variables->Set(varID + 1, x);
+				Main_Data::game_variables->Set(varID + 2, y);
+				Main_Data::game_variables->Set(varID + 3, w);
+				Main_Data::game_variables->Set(varID + 4, h);
+
+				Push(common_event);
+
+				// Used for update the common event
+				Game_Message::FirstCall = true;
+				return false;
+			}
+		}
+		else {
+			// Disable the first call
+			Game_Message::FirstCall = false;
+
+			int varID = Game_Message::systemVarID[2];
+
+			int x = Main_Data::game_variables->Get(varID + 1);
+			int y = Main_Data::game_variables->Get(varID + 2);
+			int w = Main_Data::game_variables->Get(varID + 3);
+			int h = Main_Data::game_variables->Get(varID + 4);
+
+			auto st = Scene::instance->type;
+			if (st == Scene::Map) {
+				Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+				scene->Reset_MessageWindow(x, y, w, h);
+
+				Main_Data::game_system->SetMessagePosition(-1);
+			}
+
+		}
+	}
+
 	auto& index = GetFrame().current_command;
 
 	if (!Game_Message::CanShowMessage(main_flag)) {
@@ -1010,7 +1149,7 @@ bool Game_Interpreter::CommandShowChoices(lcf::rpg::EventCommand const& com) { /
 	pm.SetIsEventMessage(true);
 
 	// Choices setup
-	std::vector<std::string> choices = GetChoices(4);
+	std::vector<std::string> choices = GetChoices(Game_Message::GetMaxLine());
 	pm.SetChoiceCancelType(com.parameters[0]);
 	SetupChoices(choices, com.indent, pm);
 
@@ -5208,6 +5347,36 @@ bool Game_Interpreter::CommandManiacCallCommand(lcf::rpg::EventCommand const& co
 	// This is incompatible to Maniacs but has a better compatibility with our code.
 	Push({ cmd }, GetCurrentEventId(), false);
 
+	return true;
+}
+
+bool Game_Interpreter::CommandManiacControlMessage(lcf::rpg::EventCommand const& com) {
+	if (com.parameters.size() == 0) {
+		// Reset control
+		return true;
+	}
+
+	int hookType = com.parameters[1];
+	Game_Message::commonEventID[hookType] = com.parameters[2];
+	Game_Message::systemVarID[hookType] = com.parameters[3];
+	Game_Message::systemTextID[hookType] = com.parameters[4];
+	Game_Message::userVarID[hookType] = com.parameters[5];
+	Game_Message::userTextID[hookType] = com.parameters[6];
+
+	if (com.parameters[2] == 0) {
+		auto st = Scene::instance->type;
+		if (st == Scene::Map) {
+			int w = MESSAGE_BOX_WIDTH;
+			int h = MESSAGE_BOX_HEIGHT;
+			int x = Player::message_box_offset_x;
+			int y = Player::screen_height - MESSAGE_BOX_HEIGHT;
+			Scene_Map* scene = (Scene_Map*)Scene::Find(Scene::Map).get();
+			scene->Reset_MessageWindow(x, y, w, h);
+
+			Main_Data::game_system->SetMessagePosition(-1);
+		}
+	}
+	
 	return true;
 }
 

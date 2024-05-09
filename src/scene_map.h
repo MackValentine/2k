@@ -49,6 +49,9 @@ public:
 
 	std::unique_ptr<Spriteset_Map> spriteset;
 
+	void Reset_MessageWindow(int x, int y, int w, int h);
+	int* GetWindowMessage();
+
 private:
 	enum TeleportTransitionRule {
 		eTransitionNormal,
