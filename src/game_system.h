@@ -436,6 +436,13 @@ public:
 	/** @return Whether the game was loaded from a savegame in the current frame */
 	bool IsLoadedThisFrame() const;
 
+	int commonEventID[16] = {0};
+	int systemVarID[16] = { 0 };
+	int systemTextID[16] = { 0 };
+	int userVarID[16] = { 0 };
+	int userTextID[16] = { 0 };
+	bool FirstCall = false;
+
 private:
 	std::string InelukiReadLink(Filesystem_Stream::InputStream& stream);
 

@@ -278,6 +278,15 @@ void Window_Message::InsertNewPage() {
 	else if (Game_Message::GetRealPosition() == 2) {
 		y = Player::screen_height - Player::menu_offset_y - GetHeight() ;
 	}
+	else if (Game_Message::GetRealPosition() == -1) {
+		int varID = Main_Data::game_system->systemVarID[2];
+		x = Main_Data::game_variables->Get(varID + 1);
+		y = Main_Data::game_variables->Get(varID + 2);
+	}
+	// Set X pos
+	if (Game_Message::GetRealPosition() != -1) {
+		x = Player::screen_width / 2 - GetWidth() / 2;
+	}
 
 	if (Main_Data::game_system->IsMessageTransparent()) {
 		SetOpacity(0);
