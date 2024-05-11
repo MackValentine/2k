@@ -218,7 +218,7 @@ void Scene_Item_Custom::vUpdate() {
 
 
 	if (CustomItem::usePockets && pocket_window->GetActive()) {
-
+		item_window->SetActive(false);
 
 		if (pocket_window->GetIndex() != old_pocket_index) {
 			item_window->SetPocket(GetPocket());
@@ -236,6 +236,7 @@ void Scene_Item_Custom::vUpdate() {
 		else if (Input::IsTriggered(Input::DECISION)) {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
 			pocket_window->SetActive(false);
+			item_window->SetActive(true);
 		}
 	}
 	else {
