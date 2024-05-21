@@ -92,7 +92,7 @@ void BattleAnimation::OnBattle2SpriteReady(FileRequestResult* result) {
 	SetSrcRect(Rect(0, 0, 0, 0));
 }
 
-void BattleAnimation::DrawAt(Bitmap& dst, int x, int y) {
+void BattleAnimation::DrawAt(Bitmap& dst, int x, int y, const Sprite_Battler* sprite) {
 	if (IsDone()) {
 		return;
 	}
@@ -121,7 +121,14 @@ void BattleAnimation::DrawAt(Bitmap& dst, int x, int y) {
 			cell.tone_green * 128 / 100,
 			cell.tone_blue * 128 / 100,
 			cell.tone_gray * 128 / 100));
-		SetOpacity(255 * (100 - cell.transparency) / 100);
+		int opacity = 255 * (100 - cell.transparency) / 100;
+		if (useBattlerOpacity && sprite)
+		{
+			double mult = (sprite->GetOpacity() * 100.0) / 255.0;
+			opacity = (opacity * mult) / 100;
+		}
+
+		SetOpacity(opacity);
 		SetZoomX(cell.zoom / 100.0);
 		SetZoomY(cell.zoom / 100.0);
 		SetFlipX(invert);
@@ -308,7 +315,7 @@ void BattleAnimationBattle::Draw(Bitmap& dst) {
 				offset = CalculateOffset(animation.position, GetAnimationCellHeight() / 2);
 			}
 		}
-		DrawAt(dst, Player::menu_offset_x + battler->GetBattlePosition().x, Player::menu_offset_y + battler->GetBattlePosition().y + offset);
+		DrawAt(dst, Player::menu_offset_x + battler->GetBattlePosition().x, Player::menu_offset_y + battler->GetBattlePosition().y + offset, sprite);
 	}
 }
 void BattleAnimationBattle::FlashTargets(int r, int g, int b, int p) {
@@ -340,7 +347,7 @@ void BattleAnimationBattler::Draw(Bitmap& dst) {
 	for (auto* battler: battlers) {
 		SetFlashEffect(battler->GetFlashColor());
 		// Game_Battler::GetDisplayX() and Game_Battler::GetDisplayX() already add MENU_OFFSET
-		DrawAt(dst, battler->GetDisplayX(), battler->GetDisplayY());
+		DrawAt(dst, battler->GetDisplayX(), battler->GetDisplayY(), battler->GetBattleSprite());
 	}
 }
 
@@ -410,4 +417,8 @@ void BattleAnimation::SetFrame(int frame) {
 
 void BattleAnimation::SetInvert(bool inverted) {
 	invert = inverted;
+}
+
+void BattleAnimation::SetUseBattlerOpacity(bool b) {
+	useBattlerOpacity = b;
 }

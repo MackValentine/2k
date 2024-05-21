@@ -102,6 +102,8 @@ public:
 	void SetAfterimageAmount(unsigned amount);
 	void DoAfterimageFade();
 
+	int opacity;
+
 protected:
 	bool useDeathFade = false;
 

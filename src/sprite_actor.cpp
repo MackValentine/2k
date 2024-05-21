@@ -192,6 +192,7 @@ void Sprite_Actor::SetAnimationState(int state, LoopState loop, int animation_id
 			} else {
 				animation.reset(new BattleAnimationBattler(*battle_anim, { battler }));
 				animation->SetZ(GetZ());
+				animation->SetUseBattlerOpacity(true);
 			}
 			animation->SetInvert(battler->IsDirectionFlipped());
 		}
@@ -300,7 +301,7 @@ void Sprite_Actor::Draw(Bitmap& dst) {
 	SetFlashEffect(battler->GetFlashColor());
 
 	int steps = static_cast<int>(256 / images.size());
-	int opacity = steps;
+	opacity = steps;
 
 	const auto dt = GetBattler()->GetDeathTimer();
 	if (dt > 0) {

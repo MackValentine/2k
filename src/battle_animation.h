@@ -79,12 +79,17 @@ public:
 	 **/
 	void SetInvert(bool inverted);
 
+	void BattleAnimation::SetUseBattlerOpacity(bool b);
+
 protected:
+
+	bool useBattlerOpacity = false;
+
 	BattleAnimation(const lcf::rpg::Animation& anim, bool only_sound = false, int cutoff = -1);
 
 	virtual void FlashTargets(int r, int g, int b, int p) = 0;
 	virtual void ShakeTargets(int str, int spd, int time) = 0;
-	void DrawAt(Bitmap& dst, int x, int y);
+	void DrawAt(Bitmap& dst, int x, int y, const Sprite_Battler* sprite = NULL);
 	virtual void ProcessAnimationTiming(const lcf::rpg::AnimationTiming& timing);
 	virtual void ProcessAnimationFlash(const lcf::rpg::AnimationTiming& timing);
 	void OnBattleSpriteReady(FileRequestResult* result);
