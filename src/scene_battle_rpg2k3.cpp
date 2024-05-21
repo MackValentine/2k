@@ -49,6 +49,7 @@
 #include <algorithm>
 #include <memory>
 #include "feature.h"
+#include "window_command_custom.h"
 
 //#define EP_DEBUG_BATTLE2K3_STATE_MACHINE
 
@@ -685,7 +686,21 @@ void Scene_Battle_Rpg2k3::CreateBattleCommandWindow() {
 	auto* actor = Main_Data::game_party->GetActor(0);
 	auto commands = GetBattleCommandNames(actor);
 
-	command_window.reset(new Window_Command(std::move(commands), option_command_mov));
+	if (CustomBattle::used) {
+		std::string win_name = "Commands";
+
+		auto it2 = CustomBattle::customWindows.find(win_name);
+
+		if (it2 != CustomBattle::customWindows.end()) {
+			command_window.reset(new Window_Command_Custom(std::move(commands), option_command_mov, CustomBattle::customWindows[win_name].column));
+		}
+		else {
+			command_window.reset(new Window_Command(std::move(commands), option_command_mov));
+		}
+	}
+	else {
+		command_window.reset(new Window_Command(std::move(commands), option_command_mov));
+	}
 
 	SetBattleCommandsDisable(*command_window, actor);
 
