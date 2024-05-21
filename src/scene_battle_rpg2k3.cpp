@@ -2659,7 +2659,8 @@ Scene_Battle_Rpg2k3::BattleActionReturn Scene_Battle_Rpg2k3::ProcessBattleAction
 		auto* enemy = static_cast<Game_Enemy*>(target);
 		if (!was_dead && enemy->IsDead()) {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_EnemyKill));
-			enemy->SetDeathTimer();
+			if (target->GetBattleAnimationId() == 0)
+				enemy->SetDeathTimer();
 			RefreshTargetWindow();
 		}
 	}

@@ -248,16 +248,6 @@ public:
 	 */
 	void SetExplodeTimer(int t = 20);
 
-	/** @return the death animation timer */
-	int GetDeathTimer() const;
-
-	/**
-	 * Set the death animation timer
-	 *
-	 * @param t the value to set.
-	 */
-	void SetDeathTimer(int t = 36);
-
 	/** @return true if enemy is flying */
 	bool IsFlying() const;
 
@@ -288,7 +278,6 @@ protected:
 	int hp = 0;
 	int sp = 0;
 	int blink_timer = 0;
-	int death_timer = 0;
 	int explode_timer = 0;
 
 	// Animated enemy
@@ -409,14 +398,6 @@ inline int Game_Enemy::GetExplodeTimer() const {
 
 inline void Game_Enemy::SetExplodeTimer(int t) {
 	explode_timer = t;
-}
-
-inline int Game_Enemy::GetDeathTimer() const {
-	return death_timer;
-}
-
-inline void Game_Enemy::SetDeathTimer(int t) {
-	death_timer = t;
 }
 
 inline bool Game_Enemy::IsFlying() const {

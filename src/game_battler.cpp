@@ -587,6 +587,7 @@ Game_Party_Base& Game_Battler::GetParty() const {
 }
 
 void Game_Battler::UpdateBattle() {
+	if (death_timer > 0) --death_timer;
 	Shake::Update(shake.position, shake.time_left, shake.strength, shake.speed, false);
 	Flash::Update(flash.current_level, flash.time_left);
 	++frame_counter;
@@ -643,6 +644,7 @@ void Game_Battler::ResetBattle() {
 	SetBattleAlgorithm(nullptr);
 	SetBattleSprite(nullptr);
 	SetWeaponSprite(nullptr);
+	death_timer = 0;
 }
 
 int Game_Battler::GetAttributeRate(int attribute_id) const {

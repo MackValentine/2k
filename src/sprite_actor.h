@@ -103,6 +103,8 @@ public:
 	void DoAfterimageFade();
 
 protected:
+	bool useDeathFade = false;
+
 	void CreateSprite();
 	void OnMonsterSpriteReady(FileRequestResult* result);
 	void OnBattlercharsetReady(FileRequestResult* result, int32_t battler_index);

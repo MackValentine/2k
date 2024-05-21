@@ -221,7 +221,6 @@ int Game_Enemy::GetFlyingOffset() const {
 
 void Game_Enemy::UpdateBattle() {
 	if (blink_timer > 0) --blink_timer;
-	if (death_timer > 0) --death_timer;
 	if (explode_timer > 0) --explode_timer;
 
 	if (GetBattleAnimationId() > 0) {

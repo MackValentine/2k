@@ -162,7 +162,16 @@ void Sprite_Actor::SetAnimationState(int state, LoopState loop, int animation_id
 			return;
 		}
 
-		const auto* ext = lcf::ReaderUtil::GetElement(anim->poses, anim_state);
+		useDeathFade = false;
+		auto* ext = lcf::ReaderUtil::GetElement(anim->poses, anim_state);
+		if (anim_state == Sprite_Actor::AnimationState_Dead && ext->battler_name.empty() &&
+			ext->animation_type == lcf::rpg::BattlerAnimationPose::AnimType_character) {
+			ext = lcf::ReaderUtil::GetElement(anim->poses, Sprite_Actor::AnimationState_Idle);
+			anim_state = Sprite_Actor::AnimationState_Idle;
+			GetBattler()->SetDeathTimer();
+			useDeathFade = true;
+		}
+
 		if (!ext) {
 			Output::Warning("Animation {}: Invalid battler anim-extension state {}", anim->ID, anim_state);
 			return;
@@ -292,6 +301,22 @@ void Sprite_Actor::Draw(Bitmap& dst) {
 
 	int steps = static_cast<int>(256 / images.size());
 	int opacity = steps;
+
+	const auto dt = GetBattler()->GetDeathTimer();
+	if (dt > 0) {
+		opacity = 7 * dt;
+	}
+
+	if (GetBattler()->GetType() == Game_Battler::Type_Enemy) {
+		auto* enemy = static_cast<Game_Enemy*>(GetBattler());
+
+		if (enemy->IsTransparent()) {
+			opacity = 160 * opacity / 255;
+		}
+	}
+	if (GetBattler()->IsDead() && dt == 0 && useDeathFade)
+		opacity = 0;
+
 	for (auto it = images.crbegin(); it != images.crend(); ++it) {
 		Sprite_Battler::SetFixedFlipX();
 		Sprite_Battler::SetX(it->x);
