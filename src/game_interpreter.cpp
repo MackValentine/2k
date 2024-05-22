@@ -836,7 +836,7 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacCallCommand(com);
 		case static_cast<Game_Interpreter::Cmd>(2053): //Cmd::EasyRpg_SetInterpreterFlag
 			return CommandEasyRpgSetInterpreterFlag(com);
-		case static_cast<Cmd>(2055): //EasyRPG_ProcessJson
+		case static_cast<Game_Interpreter::Cmd>(2055): //EasyRPG_ProcessJson
 			return CommandProcessJson(com);
 		default:
 			return true;
@@ -5148,7 +5148,14 @@ bool Game_Interpreter::CommandEasyRpgSetInterpreterFlag(lcf::rpg::EventCommand c
 	return true;
 }
 bool Game_Interpreter::CommandProcessJson(lcf::rpg::EventCommand const& com) {
+
+#ifndef HAVE_NLOHMANN_JSON
+	Output::Warning("CommandProcessJson: JSON not supported on this platform");
+	return true;
+#else
+
 	if (!Player::IsPatchManiac()) {
+		Output::Warning("CommandProcessJson: This command needs Maniac Patch support");
 		return true;
 	}
 
@@ -5215,6 +5222,8 @@ bool Game_Interpreter::CommandProcessJson(lcf::rpg::EventCommand const& com) {
 	}
 
 	return true;
+
+#endif // !HAVE_NLOHMANN_JSON
 }
 
 Game_Interpreter& Game_Interpreter::GetForegroundInterpreter() {
