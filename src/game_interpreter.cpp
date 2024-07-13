@@ -826,7 +826,7 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CommandManiacControlStrings(com);
 		case Cmd::Maniac_CallCommand:
 			return CommandManiacCallCommand(com);
-		case 3029:
+		case static_cast<Game_Interpreter::Cmd>(3029):
 			return CommandManiacControlMessage(com);
 		default:
 			return true;
@@ -1126,6 +1126,8 @@ bool Game_Interpreter::CommandShowChoices(lcf::rpg::EventCommand const& com) { /
 
 	// Choices setup
 	std::vector<std::string> choices = GetChoices(Game_Message::GetMaxLine());
+	choices.push_back(""); //workaround to make last choice selectable when 5 or more lines.
+
 	pm.SetChoiceCancelType(com.parameters[0]);
 	SetupChoices(choices, com.indent, pm);
 

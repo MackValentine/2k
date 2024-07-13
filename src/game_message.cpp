@@ -371,8 +371,11 @@ Game_Message::ParseParamResult Game_Message::ParseActor(const char* iter, const 
 }
 
 int Game_Message::GetMaxLine() {
+	int output = 0;
 	if (window->GetHeight() == MESSAGE_BOX_HEIGHT)
-		return 4;
-	// return window->GetMaxLinesPerPage();
-	 return (window->GetHeight() - 16 ) / 16;
+		output = 4;
+	else
+		output = (window->GetHeight() - 16 ) / 16;
+
+	return output + 1; //workaround to make last choice selectable when 4 lines.
 }
