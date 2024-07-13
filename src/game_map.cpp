@@ -355,7 +355,7 @@ void Game_Map::SetupCommon() {
 	CreateMapEvents();
 }
 
-bool Game_Map::CloneMapEvent(int src_map_id, int src_event_id, int target_x, int target_y, int target_event_id = 0) {
+bool Game_Map::CloneMapEvent(int src_map_id, int src_event_id, int target_x, int target_y, int target_event_id = 0, std::string target_name = "") {
 	std::unique_ptr<lcf::rpg::Map> source_map;
 
 	if (src_map_id == GetMapId()) source_map = std::make_unique<lcf::rpg::Map>(GetMap());
@@ -386,6 +386,8 @@ bool Game_Map::CloneMapEvent(int src_map_id, int src_event_id, int target_x, int
 	else new_event.ID = GetNextAvailableEventId();
 	new_event.x = target_x;
 	new_event.y = target_y;
+
+	if (!target_name.empty()) new_event.name = lcf::DBString(target_name);
 
 	map->events.push_back(new_event);
 
