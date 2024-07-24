@@ -24,6 +24,7 @@
 #include "input.h"
 #include <lcf/inireader.h>
 #include <cstring>
+#include <filesystem>
 
 #ifdef _WIN32
 #  include <shlobj.h>
@@ -93,6 +94,10 @@ Game_Config Game_Config::Create(CmdlineParser& cp) {
 	std::string config_file;
 	if (!config_path.empty()) {
 		config_file = FileFinder::MakePath(config_path, config_name);
+	}
+	else {
+		std::string localPath = FileFinder::MakePath(std::filesystem::current_path().string(), config_name);
+		if (std::filesystem::exists(localPath)) config_file = localPath;
 	}
 
 	auto cli_config = FileFinder::Root().OpenOrCreateInputStream(config_file);
