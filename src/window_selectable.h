@@ -30,6 +30,8 @@ class Window_Selectable: public Window_Base {
 public:
 	Window_Selectable(int ix, int iy, int iwidth, int iheight);
 
+	std::vector<Rect> tagged_rects = {};
+
 	/**
 	 * Creates the contents based on how many items
 	 * are currently in the window.
@@ -76,6 +78,11 @@ public:
 	virtual void UpdateCursorRect();
 	void Update() override;
 
+	void UpdateScrolling();
+	void HandleMovement();
+	void MoveIndex(int delta);
+	void MoveIndexVertical(int direction);
+	void MoveIndexHorizontal(int direction);
 	virtual void UpdateHelp();
 
 	/**
